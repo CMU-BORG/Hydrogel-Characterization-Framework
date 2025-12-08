@@ -36,32 +36,33 @@ This repository provides an **experimental and computational framework** for cha
 
 4. **Area Calculation and Swelling Analysis**
    - Run `CircleFitting.m` (uses `natsort.m`, `ErrEllipse.m`) → calculates cross-sectional area in 15 min intervals.
-   - Frames from videos were sampled every **15 min** and imported to MATLAB.  
-   - Each frame was converted to an **HSV pixel map**; a mask isolated the blue dye range.  
-   - A size threshold filter reduced noise.  
-   - The map was converted to a binary image for edge detection.  
-   - Average radii from the map center to detected edges were used to calculate cross-sectional area.
+      - Frames from videos were sampled every **15 min** and imported to MATLAB.  
+      - Each frame was converted to an **HSV pixel map**; a mask isolated the blue dye range.  
+      - A size threshold filter reduced noise.  
+      - The map was converted to a binary image for edge detection.  
+      - Average radii from the map center to detected edges were used to calculate cross-sectional area.
    - Record cross-sectional areas in `Inventory_Final.xlsx`, area time series in `Areas_Final.csv`.
 
 5. **Mechanical Testing (MTS)**
-   - Material stiffness was analyzed on a **universal testing system (MTS Systems, Criterion Model C41)** with a **biobath accessory** using a **50N load cell**.
-   - The biobath was filled to a fixed height with **2.5% (w/v) CaCl₂ solution** for aquatic testing.
-   - The crosshead was equipped with a compression plate.  
-   - An initial test measured ambient buoyancy forces.  
-   - Crosslinked samples were fixed to the stage using **double-sided tape and water-resistant glue**.  
-   - The crosshead plate was lowered until contact with the sample at a **pre-load of 0.10 mN**.  
-   - Samples were cyclically compressed **1.5 mm at 0.1 mm/s for 30 cycles** until peak forces converged within <5%.  
-   - Raw force vs. displacement data were exported to CSV for MATLAB analysis.
+   - Collect material mechanics data of a sample population
+      - Material stiffness was analyzed on a **universal testing system (MTS Systems, Criterion Model C41)** with a **biobath accessory** using a **50N load cell**.
+      - The biobath was filled to a fixed height with **2.5% (w/v) CaCl₂ solution** for aquatic testing.
+      - The crosshead was equipped with a compression plate.  
+      - An initial test measured ambient buoyancy forces.  
+      - Crosslinked samples were fixed to the stage using **double-sided tape and water-resistant glue**.  
+      - The crosshead plate was lowered until contact with the sample at a **pre-load of 0.10 mN**.  
+      - Samples were cyclically compressed **1.5 mm at 0.1 mm/s for 30 cycles** until peak forces converged within <5%.  
+      - Raw force vs. displacement data were exported to CSV for MATLAB analysis.
 
 6. **Stiffness Data Processing in MATLAB**
    - Run `StiffnessTesting.m` → calculates the effective elastic modulus of tested hydrogel samples.
-   - Force vs. displacement data were corrected for ambient noise and buoyancy forces.  
-   - Loading curves from the **last 5 cycles** were isolated.  
-   - Plastic deformation from pre-straining resulted in a **zero-contact region (~1.1 mm)**; curves were truncated to include only contact regions.  
-   - Sample dimensions were corrected before stress (σ, N/mm²) and strain (ε, mm/mm) calculations.  
-   - The stress region occurred over ~10% strain.  
-   - Effective stiffness modulus (E_eff) was approximated using a **secant linear slope (0.07 < ε < 0.10)** of the converged stress-strain curves.  
-   - The mean slope was recorded as the effective stiffness modulus.
+      - Force vs. displacement data were corrected for ambient noise and buoyancy forces.  
+      - Loading curves from the **last 5 cycles** were isolated.  
+      - Plastic deformation from pre-straining resulted in a **zero-contact region (~1.1 mm)**; curves were truncated to include only contact regions.  
+      - Sample dimensions were corrected before stress (σ, N/mm²) and strain (ε, mm/mm) calculations.  
+      - The stress region occurred over ~10% strain.  
+      - Effective stiffness modulus (E_eff) was approximated using a **secant linear slope (0.07 < ε < 0.10)** of the converged stress-strain curves.  
+      - The mean slope was recorded as the effective stiffness modulus.
 
 
 ---
@@ -81,7 +82,38 @@ The computational framework uses **Approximate Bayesian Computation – Sequenti
 ### Workflow
 1. **Initialization**
    - Define prior distributions for `E0`, `dE`, and `τ`.
+
+         mu_E0_mean = ; % [kPa]
+         mu_E0_std = ;  % [kPa]
+         mu_E0_prior = ;
+         
+         mu_dE_mean = ; % [kPa]
+         mu_dE_std = ;  % [kPa]
+         mu_dE_prior = ;
+         
+         sig_E_lower = ;   % [kPa]   
+         sig_E_upper = ;   % [kPa]
+         sig_E_prior = ;
+         
+         rho_E_prior = ;   % [  ]
+         
+         mean_tau_prior = ;   % [minutes]
+         sig_tau_prior = ;    % [minutes]
+     
+   - Set proposal widths for parameter walks.
+     
+         meanE_proposal_width = 0.3;   % [kPa]
+         stdE_proposal_width = 0.4;    % [kPa]
+         rho_proposal_width = 0.1;   % [  ]
+         meanTau_proposal_width = 20; % [minutes]
+         sigTau_proposal_width = 1;  % [minutes] 
+
+   - Set the number of iterations until convergence.
    - Set tolerance thresholds for acceptance.
+      - `epsilon_sum_met_central`: median threshold
+      - `epsilon_sum_met_spread`: spread threshold
+    
+
 
 2. **Simulation**
    - For each particle:
@@ -89,18 +121,16 @@ The computational framework uses **Approximate Bayesian Computation – Sequenti
      - Generate simulated stiffness curves:
        
 
-\[
-       E(t) = E_0 + dE \cdot (1 - e^{-t/\tau})
-       \]
+            E(t) = E_0 + dE \cdot (1 - e^{-t/\tau})
 
 
-     - Compute summary statistics:
-       - `sum_met_central`: median stiffness trajectory
-       - `sum_met_spread`: interquartile range (IQR) of stiffness across replicates
+   - Compute summary statistics:
+      - `sum_met_central`: median stiffness trajectory
+      - `sum_met_spread`: interquartile range (IQR) of stiffness across replicates
 
 3. **Comparison**
    - Compare simulated summary statistics (`sum_met_central_sim`, `sum_met_spread_sim`) to experimental ones (`sum_met_central`, `sum_met_spread`).
-   - Accept particles if the distance between simulated and experimental metrics is below tolerance.
+   - Accept particles if the distance between simulated and experimental metrics is below tolerance (epsilon).
 
 4. **Resampling**
    - Weight accepted particles by their distance.
