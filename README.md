@@ -19,23 +19,29 @@ This repository provides an **experimental and computational framework** for cha
 ## 🧪 Experimental Workflow
 
 1. **CAD & Printing**
-   - Slice geometry (e.g., `Part3.stl`) using Slic3r profile (30G needle, 5 mL syringe).
-   - Print alginate samples and perform post-printing crosslinking.
+   - Slice target part geometry (e.g., `Part3.stl`) using Slic3r configuration profile (30G needle, 5 mL syringe).
+   - FRESH-printed part out of 4% w/v alginate into a 0.05% CaCl2 + gelatin support bath. Perform post-printing crosslinking protocols according to _____________.
 
 2. **Sample Metadata**
-   - Record diameter, mass, height in `Inventory_Final.xlsx`.
-   - Label samples:  
+   - Measure and record initial sample diameter, mass, height in `Inventory_Final.xlsx`.
+   - Label samples and create unique sample folder according to the naming structure:  
      - `S` = low temp group, `T` = high temp group  
      - `0–6` = crosslink time  
-     - `a–g` = replicate ID  
+     - `a–g` = replicate ID
 
-3. **Video Analysis**
-   - Record video during crosslinking, upload to sample folder.
-   - Run `GetFrames.m` (uses `TraceVideo.m`) → saves frames in `frames/`.
+3. **Crosslinking Video Analysis**
+   - Crosslinking should be performed according to ________.
+   - Record video during crosslinking such that the sample is in focus and appears fully in the frame, save to unique sample folder as MP4.
+   - Run `GetFrames.m` (uses `TraceVideo.m`) → saves sample frames from every 15 minutes to `frames/`.
 
-4. **Area Calculation**
-   - Run `CircleFitting.m` (uses `natsort.m`, `ErrEllipse.m`) → calculates cross-sectional area.
-   - Record diameters in `Inventory_Final.xlsx`, area time series in `Areas_Final.csv`.
+4. **Area Calculation and Swelling Analysis**
+   - Run `CircleFitting.m` (uses `natsort.m`, `ErrEllipse.m`) → calculates cross-sectional area in 15 min intervals.
+   - Frames from videos were sampled every **15 min** and imported to MATLAB.  
+   - Each frame was converted to an **HSV pixel map**; a mask isolated the blue dye range.  
+   - A size threshold filter reduced noise.  
+   - The map was converted to a binary image for edge detection.  
+   - Average radii from the map center to detected edges were used to calculate cross-sectional area.
+   - Record cross-sectional areas in `Inventory_Final.xlsx`, area time series in `Areas_Final.csv`.
 
 5. **Mechanical Testing (MTS)**
    - Material stiffness was analyzed on a **universal testing system (MTS Systems, Criterion Model C41)** with a **biobath accessory** using a **50N load cell**.
@@ -47,7 +53,8 @@ This repository provides an **experimental and computational framework** for cha
    - Samples were cyclically compressed **1.5 mm at 0.1 mm/s for 30 cycles** until peak forces converged within <5%.  
    - Raw force vs. displacement data were exported to CSV for MATLAB analysis.
 
-6. **Data Processing in MATLAB**
+6. **Stiffness Data Processing in MATLAB**
+   - Run `StiffnessTesting.m` → calculates the effective elastic modulus of tested hydrogel samples.
    - Force vs. displacement data were corrected for ambient noise and buoyancy forces.  
    - Loading curves from the **last 5 cycles** were isolated.  
    - Plastic deformation from pre-straining resulted in a **zero-contact region (~1.1 mm)**; curves were truncated to include only contact regions.  
@@ -56,13 +63,6 @@ This repository provides an **experimental and computational framework** for cha
    - Effective stiffness modulus (E_eff) was approximated using a **secant linear slope (0.07 < ε < 0.10)** of the converged stress-strain curves.  
    - The mean slope was recorded as the effective stiffness modulus.
 
-7. **Swelling Analysis**
-   - Crosslinking time and temperature effects were quantified by tracking **cross-sectional area changes**.  
-   - Frames from videos were sampled every **15 min** and imported to MATLAB.  
-   - Each frame was converted to an **HSV pixel map**; a mask isolated the blue dye range.  
-   - A size threshold filter reduced noise.  
-   - The map was converted to a binary image for edge detection.  
-   - Average radii from the map center to detected edges were used to calculate cross-sectional area.
 
 ---
 
