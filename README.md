@@ -17,7 +17,7 @@ This repository provides an **experimental and computational framework** for cha
 ## 🧪 Experimental Workflow
 
 1. **CAD & Printing**
-   - Slice target part geometry (e.g., `Part3.stl`) using Slic3r configuration profile (30G needle, 5 mL syringe).
+   - Slice target part geometry (e.g., `Part3.stl`) using Slic3r configuration profile for desired printer.
    - FRESH-print part out of desired hydrogel material, and perform any post-processing steps to bring it to the "uncrosslinked" reference state. 
 
 2. **Sample Metadata**
@@ -57,10 +57,19 @@ This repository provides an **experimental and computational framework** for cha
       - Force vs. displacement data are corrected for ambient noise and buoyancy forces.  
       - Loading curves from the **last 5 cycles** are isolated.  
       - Plastic deformation from pre-straining can result in a **zero-contact region**; Truncate curves to include only contact regions.  
-      - Sample dimensions were corrected before stress (σ, N/mm²) and strain (ε, mm/mm) calculations.  
-      - The stress region occurred over ~10% strain.  
-      - Effective stiffness modulus (E_eff) was approximated using a **secant linear slope (0.07 < ε < 0.10)** of the converged stress-strain curves.  
-      - The mean slope was recorded as the effective stiffness modulus.
+      - Sample dimensions are corrected before stress (σ, N/mm²) and strain (ε, mm/mm) calculations.  
+      - Effective stiffness modulus (E_eff) is approximated using a **secant linear slope** of the converged stress-strain curves.  
+      - The mean slope is recorded as the effective stiffness modulus, and written to the inventory table.
+    
+7. **PLotting and Visualization in MATLAB**
+   - Run `PLotting.m` → visualizes the crosslinking dynamics, swelling trends, and effective elastic modulus of tested hydrogel samples across different experimental groups.
+      - Outputs include:
+      - Effective Elatic Modulus vs Crosslink Time
+      - Geometric Swelling vs Crosslink Time
+      - Mass Swelling vs Crosslink Time
+      - Initial Geometry
+      - Normalized Area over Time (groups and means)
+        
 
 
 ---
