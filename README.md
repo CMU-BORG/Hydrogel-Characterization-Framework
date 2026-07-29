@@ -74,7 +74,7 @@ This repository provides an **experimental and computational framework** for cha
 
 ---
 
-## 🔬 Bayesian Modeling (ABC-SMC)
+## 🖥️ Bayesian Modeling (ABC-SMC)
 
 The computational framework uses **Approximate Bayesian Computation – Sequential Monte Carlo (ABC-SMC)** to infer posterior distributions of material stiffness parameters from experimental data. This approach allows us to estimate not only the mean stiffness trajectory but also the full predictive spread of possible outcomes.
 
@@ -83,8 +83,7 @@ The computational framework uses **Approximate Bayesian Computation – Sequenti
   - `E0` (initial stiffness)
   - `dE` (stiffness gain after crosslinking)
   - `τ` (time constant of crosslinking kinetics)
-- **Challenge:** The likelihood function for viscoelastic hydrogel stiffness is intractable. The sample size is small, and the variability high, so fit confidence and power is low.
-- **Solution:** Use ABC-SMC, which compares simulated summary statistics to experimental ones without requiring an explicit likelihood, to simulate a larger population that can be fit and modeled with high power and confidence.
+- We assume that the values of E0, dE, and tau are not constant but are different for each sample due to differences in composition, exact fabrication condition, etc. Therefore, we construct a probabilistic model for the distribution of E0, dE, and tau such that we can sample from this model to generate realistic models of hydrogel samples.
 
 ### Workflow
 1. **Initialization**
@@ -150,18 +149,17 @@ The computational framework uses **Approximate Bayesian Computation – Sequenti
 
 ### Key Notes
 - **Two levels of variability are modeled:**
-  - *Across particles:* posterior uncertainty in mean stiffness trajectory.
-  - *Within particles:* spread of possible stiffness values given `sig_E0`, `sig_dE`, and correlation `ρ`.
+  - *Within population parameters:* posterior uncertainty of stiffness parameters `E0`, `dE`, `tau`, and correlation `ρ`.
+  - *Across particle population* mean stiffness trajectory and spread of possible stiffness values given `mu_E0`, `mu_dE`, `mu_tau`, and `sig_E0`, `sig_dE`, `sig_tau`, respectively.
 - **IQR scaling:**  
   - The spread metric (`sum_met_spread`) is based on the interquartile range of stiffness.  
-  - .......
 - **Final visualization:**  
   - Posterior mean stiffness curve is plotted.
   - Raw data is plotted.
-  - Shaded band shows the 95% credible interval derived from the final sampled population, interpolated over a dense time grid (`time_vector = linspace(0,360,360)`).
+  - Shaded band shows the 95% credible interval and standard deviation derived from the final sampled population, interpolated over a dense time grid (`time_vector = linspace(0,360,360)`).
 
 ### MATLAB Implementation
-The main script is `Hydrogel_ABC_SMC_normal_E0_dE.m`. Alternative versions of this script include: 
+The main script is `Hydrogel_ABC_SMC_Alginate_Example.m` which will run using the dependencies and raw data included in the `Alginate Stiffness Characterization` folder to replicate included plots anf figures. `Hydrogel_ABC_SMC_skeleton.m` is also included for convenience as a skeleton script that can modified and filled in to adapt the framework to any dataset or desired material metric.
 .....
 
 
