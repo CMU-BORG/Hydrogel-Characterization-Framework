@@ -159,7 +159,7 @@ The computational framework uses **Approximate Bayesian Computation – Sequenti
   - Shaded band shows the 95% credible interval and standard deviation derived from the final sampled population, interpolated over a dense time grid (`time_vector = linspace(0,360,360)`).
 
 ### MATLAB Implementation
-The main script is `Hydrogel_ABC_SMC_Alginate_Example.m` which will run using the dependencies and raw data included in the `Alginate Stiffness Characterization` folder to replicate included plots anf figures. `Hydrogel_ABC_SMC_skeleton.m` is also included for convenience as a skeleton script that can modified and filled in to adapt the framework to any dataset or desired material metric.
+The main script is `Hydrogel_ABC_SMC_Alginate_Example.m` which will run using the raw data included in `Inventory Final.xlsx` to replicate included plots and figures. `Hydrogel_ABC_SMC_skeleton.m` is also included for convenience as a skeleton script that can be modified and filled in to adapt the framework to any dataset or desired material metric.
 .....
 
 
