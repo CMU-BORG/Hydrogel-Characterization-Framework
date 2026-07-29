@@ -48,10 +48,10 @@ timestamp = datestr(now, 'yyyymmdd_HHMM');
 %% Loading experimental data and calculating the summary metrics for each time point in the experiment
 
 % load the data that you have from your experiments
-root = "/Users/averywilliamson/Library/CloudStorage/GoogleDrive-averyw@andrew.cmu.edu/Shared drives/CMU BORG - Hydrogel Printing and Biodegradable Robots/ALGINATE CHARACTERIZATION/";
+root = "placeholder";
 
 inventory_file = "Inventory Final.xlsx";
-inventory = readtable(root+"MTS Experiments/Ring/" + inventory_file,"ReadVariableNames",true);
+inventory = readtable(root + inventory_file,"ReadVariableNames",true);
 
 % extract relevant sample metrics
 inventory = inventory(:, [3, 4, 16]);
