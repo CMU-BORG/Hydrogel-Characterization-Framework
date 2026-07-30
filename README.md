@@ -29,17 +29,17 @@ This repository provides an **experimental and computational framework** for cha
 
 3. **Crosslinking Video Analysis**
    - Crosslinking should be performed according to protocols for the hydrogel material.
-   - Record video during crosslinking such that the sample is in focus and appears fully in the frame, save to unique sample folder as MP4.
-   - Run `GetFrames.m` (uses `TraceVideo.m`) → saves sample frames from every 15 minutes to `frames/`.
+   - Capture periodic images every 15 minutes during crosslinking such that the sample is in focus and appears fully in the frame, saves sample frames from every 15 minutes to `frames/`.
 
 4. **Area Calculation and Swelling Analysis**
    - Run `CircleFitting.m` (uses `natsort.m`, `ErrEllipse.m`) → calculates cross-sectional area in 15 min intervals.
-      - Frames from videos are sampled every **15 min** and imported to MATLAB.  
+      - Frames from crosslinking are sampled and imported to MATLAB.  
       - Each frame is converted to an **HSV pixel map**; a mask isolates the blue dye range.  
       - A size threshold filter reduces noise.  
       - The map is converted to a binary image for edge detection.  
       - Average radii from the map center to detected edges are used to calculate cross-sectional area.
-   - Record cross-sectional areas in `Inventory_Final.xlsx`, area time series in `Areas_Final.csv`.
+   - Record cross-sectional areas in `Inventory_Final.xlsx`, area time series in `Areas_Final.csv`, and save figures of visual cross-sectional area for each frame to `figs/`.
+   - Optionally generate dynamic cross-sectional area visualization by running `TraceVideo.m.`, which concatenates/transitions through figures from each frame and saves an `MP4`.
 
 5. **Mechanical Testing (MTS)**
    - Collect material mechanics data of a sample population
