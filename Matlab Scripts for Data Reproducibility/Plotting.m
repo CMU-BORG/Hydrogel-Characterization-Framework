@@ -1,10 +1,11 @@
 %% LOAD DATA 
 clear all; close all; %clc
 
-root = "/Users/averywilliamson/Library/CloudStorage/GoogleDrive-averyw@andrew.cmu.edu/Shared drives/CMU BORG - Hydrogel Printing and Biodegradable Robots/ALGINATE CHARACTERIZATION/";
+currentFolder = pwd;
+root = currentFolder + "/Experimental Data/";
 
 inventory_file = "Inventory Final.xlsx";
-inventory = readtable(root+"MTS Experiments/Ring/" + inventory_file,"ReadVariableNames",true);
+inventory = readtable(root + inventory_file,"ReadVariableNames",true);
 
 
 % Extract the relevant columns from the table
@@ -406,8 +407,9 @@ set(gca, 'FontSize', 12); % Adjust font size for better readability
 box on; % Draw box around the plot
 
 %pbaspect([3, 3, 1]);
+currentFolder = pwd;
 
-saveas(mass, root + "MTS Experiments/Ring/FIGURES/Mass Swelling vs Crosslink Time Group.svg", 'svg');
+saveas(mass, root + "/Experimental Data/FIGURES/Mass Swelling vs Crosslink Time Group.svg", 'svg');
 
 %% FITTED MODELS DATA
 
@@ -463,7 +465,7 @@ title('Fitted Effective Elastic Modulus vs Crosslink Time');
 txt = "y(x) = 0.179 - 0.062e^{-0.648x}" + newline + "R^2 = " + gof27E.rsquare;
 legend('27C', txt, 'Location', 'southeast');
 
-saveas(modulusFits, root + "MTS Experiments/Ring/FIGURES/Fitted Effective Elastic Modulus vs Crosslink Time.svg", 'svg');
+saveas(modulusFits, root + "/Experimental Data/FIGURES/Fitted Effective Elastic Modulus vs Crosslink Time.svg", 'svg');
 
 swellingFits = figure;
 hold on;
@@ -475,142 +477,8 @@ title('Negative Swelling vs Crosslink Time');
 txt = "y(x) = 13.61 - 12.86e^{-13.61x}" + newline + "R^2 = " + gof27SM.rsquare;
 legend('27C', txt, 'Location', 'southeast');
 
-saveas(swellingFits, root + "MTS Experiments/Ring/FIGURES/Fitted Negative Swelling vs Crosslink Time.svg", 'svg');
+saveas(swellingFits, root + "/Experimental Data/FIGURES/Fitted Negative Swelling vs Crosslink Time.svg", 'svg');
 
-
-%% PLOT 3D PARAMETRIC CURVES
-
-% % Normalize stiffness for color mapping
-% colorVals = rescale(results27.ModulusData);  % Scales to [0, 1]
-% 
-% % Normalize swelling for marker size (inverse relationship)
-% sizeVals = rescale(1 ./ (results27.PercentSM + eps), 20, 100);  
-% 
-% % Plot 3D curve
-% figure;
-% hold on; 
-% 
-% % Plot the smooth curve
-% plot3(time, fitted27SM, fitted27E, 'LineWidth', 2, 'Color', [0 0 0]);
-% 
-% % Plot original data points with color and size encoding
-% scatter3(results27.CrosslinkTime, results27.PercentSM, results27.ModulusData, sizeVals, colorVals, 'filled');
-% 
-% xlabel('Time');
-% ylabel('Swelling');
-% zlabel('Stiffness');
-% title('3D Trajectory of Swelling and Stiffness over Time');
-% colormap(parula);           % Choose your color spectrum
-% colorbar;                % Show color scale for stiffness
-% grid on;
-% view(345, 30);
-% 
-% function summary = bootstrapFitSummary(xData, yData, fitObj, createFitFunc, evalRange, dataLabel, varargin)
-% % bootstrapFitSummary - Bootstraps exponential fit and returns summary
-% %
-% % Inputs:
-% %   xData         - Independent variable (vector)
-% %   yData         - Dependent variable (vector)
-% %   fitObj        - Original fit object (e.g., from fit or createFit)
-% %   createFitFunc - Function handle: @(x, y, initGuess) returns [fitObj, gof]
-% %   evalRange     - Vector of x-values to evaluate the fit over
-% %   varargin      - Optional: 'NumBoot', N (default 100), 'RsqThresh', T (default 0.5)
-% %
-% % Output:
-% %   summary - Struct with fields:
-% %       .meanFit      - Mean bootstrapped fit over evalRange
-% %       .lowerBound   - 2.5th percentile curve
-% %       .upperBound   - 97.5th percentile curve
-% %       .originalFit  - Original fit over evalRange
-% %       .validFits    - Number of successful fits
-% %       .totalBoots   - Total attempted fits
-% 
-%     % Parse optional inputs
-%     p = inputParser;
-%     addParameter(p, 'NumBoot', 100);
-%     addParameter(p, 'RsqThresh', 0.5);
-%     parse(p, varargin{:});
-%     nBoot = p.Results.NumBoot;
-%     rsqThresh = p.Results.RsqThresh;
-% 
-%     % Use provided fit object
-%     originalFit = fitObj(evalRange);
-%     initGuess = coeffvalues(fitObj);
-% 
-%     % Preallocate
-%     yBoot = NaN(nBoot, length(evalRange));
-%     validCount = 0;
-% 
-%     % Bootstrap loop
-%     for i = 1:nBoot
-%         idx = randsample(length(xData), length(xData), true);
-%         xSample = xData(idx);
-%         ySample = yData(idx);
-% 
-%         try
-%             [bootFit, bootGof] = createFitFunc(xSample, ySample, initGuess);
-%             if bootGof.rsquare > rsqThresh
-%                 yBoot(i, :) = bootFit(evalRange);
-%                 validCount = validCount + 1;
-%             end
-%         catch
-%             % Leave as NaN
-%         end
-%     end
-% 
-%     % Filter valid rows
-%     validRows = all(~isnan(yBoot), 2);
-%     yMean = nanmean(yBoot(validRows, :), 1);
-%     yLower = prctile(yBoot(validRows, :), 2.5, 1);
-%     yUpper = prctile(yBoot(validRows, :), 97.5, 1);
-% 
-%     % Package summary
-%     summary = struct();
-%     summary.meanFit = yMean;
-%     summary.lowerBound = yLower;
-%     summary.upperBound = yUpper;
-%     summary.originalFit = originalFit;
-%     summary.validFits = validCount;
-%     summary.totalBoots = nBoot;
-% 
-%     % Optional plot
-%     figure;
-%     hold on;
-%     fill([evalRange, fliplr(evalRange)], [yLower, fliplr(yUpper)], ...
-%          [0.8 0.8 1], 'EdgeColor', 'none', 'FaceAlpha', 0.4);
-%     plot(evalRange, yMean, 'b-', 'LineWidth', 2);
-%     plot(evalRange, originalFit, 'r--', 'LineWidth', 1.5);
-%     scatter(xData, yData, 40, 'k', 'filled');
-%     xlabel('x');
-%     ylabel('y');
-%     title('Bootstrap Confidence Band: ', dataLabel);
-%     legend('95% CI', 'Mean Fit', 'Original Fit', 'Data');
-%     grid on;
-% end
-% 
-% 
-% 
-% function [fitresult, gof] = createFit(CrosslinkTime, ModulusData, initialGuess, varargin)
-% 
-% % Fit: 'untitled fit 1'.
-% [xData, yData] = prepareCurveData( CrosslinkTime, ModulusData );
-% 
-% % Set up fittype and options.
-% ft = fittype( 'a*exp(-b*x)+c', 'independent', 'x', 'dependent', 'y' );
-% opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
-% opts.Display = 'Off';
-% opts.StartPoint = initialGuess;
-% 
-% % Check for optional bounds
-% if length(varargin) >= 2
-%     opts.Lower = varargin{1};
-%     opts.Upper = varargin{2};
-% end
-% 
-% % Fit model to data.
-% [fitresult, gof] = fit( xData, yData, ft, opts );
-% 
-% end
 
 %% PROCESS DYNAMIC SWELLING DATA 
 A_file = "Areas Final new.csv";
@@ -782,7 +650,7 @@ title('Exponential Fits for Normalized Area over Time');
 grid off;
 hold off;
 
-% saveas(areaOverTime, root + "MTS Experiments/Ring/FIGURES/Normalized Area Over Time (all samples combined).svg", 'svg');
+% saveas(areaOverTime, root + "/Experimental Data/FIGURES/Normalized Area Over Time (all samples combined).svg", 'svg');
 
 %% PLOT DYNAMIC SWELLING (sample means, one plot) 
 
@@ -822,7 +690,7 @@ xticks(linspace(0, 360, 25));
 ylim([80, 100]);
 yticks(linspace(80, 100, 5));
 
-saveas(areaOverTime, root + "MTS Experiments/Ring/FIGURES/Normalized Area Over Time Summary.svg", 'svg');
+saveas(areaOverTime, root + "/Experimental Data/FIGURES/Normalized Area Over Time Summary.svg", 'svg');
 
 %% PLOT DYNAMIC SWELLING (sample means, different plots)
 
@@ -925,7 +793,7 @@ set(hr6, 'Units', 'inches', 'Position', [1, 1, height * 3, height]);
 % Adjust figure size for readability
 set(meanAreas, 'Units', 'normalized', 'Position', [0.1 0.1 0.95 0.5]);
 
-saveas(meanAreas, root + "MTS Experiments/Ring/FIGURES/Normalized Area over Time (Sample Means).svg", 'svg');
+saveas(meanAreas, root + "/Experimental Data/FIGURES/Normalized Area over Time (Sample Means).svg", 'svg');
 
 % plot individually 
 % 2hr
@@ -1008,9 +876,9 @@ set(hr2, 'Units', 'inches', 'Position', [1, 1, height * 1, height]);
 set(hr4, 'Units', 'inches', 'Position', [1, 1, height * 2, height]);
 set(hr6, 'Units', 'inches', 'Position', [1, 1, height * 3, height]);
 
-saveas(hr2, root + "MTS Experiments/Ring/FIGURES/Normalized Area over Time (2Hr Sample Means).svg", 'svg');
-saveas(hr4, root + "MTS Experiments/Ring/FIGURES/Normalized Area over Time (4Hr Sample Means).svg", 'svg');
-saveas(hr6, root + "MTS Experiments/Ring/FIGURES/Normalized Area over Time (6Hr Sample Means).svg", 'svg')
+saveas(hr2, root + "/Experimental Data/FIGURES/Normalized Area over Time (2Hr Sample Means).svg", 'svg');
+saveas(hr4, root + "/Experimental Data/FIGURES/Normalized Area over Time (4Hr Sample Means).svg", 'svg');
+saveas(hr6, root + "/Experimental Data/FIGURES/Normalized Area over Time (6Hr Sample Means).svg", 'svg')
 
 
 %% PLOT DYNAMIC SWELLING (specific groups)
@@ -1053,7 +921,7 @@ legend('show', 'Location', 'northeast'); % Display the legend with group labels
 grid off;
 hold off;
 
-saveas(areas_data_per_group, root + "MTS Experiments/Ring/FIGURES/Normalized Area over Time (S2).svg", 'svg');
+saveas(areas_data_per_group, root + "/Experimental Data/FIGURES/Normalized Area over Time (S2).svg", 'svg');
 
 
 %% PLOT MONOMOER RATIOS (literature) 
@@ -1101,7 +969,7 @@ saveas(areas_data_per_group, root + "MTS Experiments/Ring/FIGURES/Normalized Are
 % xlim([0 2]);
 % ytickangle(45);
 % 
-% saveas(monomerComposition, root + "MTS Experiments/Ring/FIGURES/Monomer Composition of Alginates.svg", 'svg');
+% saveas(monomerComposition, root + "/Experimental Data/FIGURES/Monomer Composition of Alginates.svg", 'svg');
 % 
 %% PLOT MONOMER RATIOS (add samples from HNMR)
 % 
@@ -1141,7 +1009,7 @@ saveas(areas_data_per_group, root + "MTS Experiments/Ring/FIGURES/Normalized Are
 % ytickangle(45);
 % ylim([0 numel(selected_species) + 1]);
 % 
-% saveas(monomerComposition2, root + "MTS Experiments/Ring/FIGURES/Monomer Composition of Alginates (no samples).svg", 'svg');
+% saveas(monomerComposition2, root + "/Experimental Data/FIGURES/Monomer Composition of Alginates (no samples).svg", 'svg');
 
 %% PLOT NET GEOMETRIC SWELLING 
 
@@ -1185,115 +1053,6 @@ saveas(areas_data_per_group, root + "MTS Experiments/Ring/FIGURES/Normalized Are
 % saveas(swelling, root + "MTS Experiments/Ring/FIGURES/Geometric Swelling vs Crosslink Time Group.svg", 'svg');
 
 
-%% PLOT INITIAL MASS VS STIFFNESS
-% initialMassStiffness = figure;
-% hold on;
-% 
-% % Define colors and markers
-% colors = lines(length(uniqueTimes));
-% markers = {'o', 's', 'd', '^', 'v', '>', '<', 'p', 'h'};
-% 
-% % Plot data points for each combination of CrosslinkTime and CrosslinkTemp
-% for i = 1:length(uniqueTimes)
-%     for j = 1:length(uniqueTemps)
-%         idx = crosslinkTime == uniqueTimes(i) & crosslinkTemp == uniqueTemps(j);
-%         scatter(modulusData(idx), initialM(idx), 100, 'MarkerEdgeColor', colors(i,:), 'Marker', markers{j}, 'DisplayName', sprintf('Time: %s, Temp: %s', string(uniqueTimes(i)), string(uniqueTemps(j))));
-%     end
-% end
-% 
-% xlabel('Stiffness');
-% ylabel('Initial Mass');
-% title('Scatter Plot of Stiffness vs Initial Mass');
-% legend('Location', 'best');
-% grid on;
-% hold off;
-% 
-% saveas(initialMassStiffness, root + "MTS Experiments/Ring/FIGURES/Initial Mass vs Stiffness.svg", 'svg');
-
-
-% finalMassStiffness = figure;
-% hold on;
-% 
-% % Plot data points for each combination of CrosslinkTime and CrosslinkTemp
-% for i = 1:length(uniqueTimes)
-%     for j = 1:length(uniqueTemps)
-%         idx = crosslinkTime == uniqueTimes(i) & crosslinkTemp == uniqueTemps(j);
-%         scatter(modulusData(idx), finalM(idx), 100, 'MarkerEdgeColor', colors(i,:), 'Marker', markers{j}, 'DisplayName', sprintf('Time: %s, Temp: %s', string(uniqueTimes(i)), string(uniqueTemps(j))));
-%     end
-% end
-% 
-% xlabel('Stiffness');
-% ylabel('Final Mass');
-% title('Scatter Plot of Stiffness vs Final Mass');
-% legend('Location', 'best');
-% grid on;
-% hold off;
-% 
-% saveas(finalMassStiffness, root + "MTS Experiments/Ring/FIGURES/Final Mass vs Stiffness.svg", 'svg');
-
-% repeat for new samples
-% massStiffness2 = figure;
-% hold on;
-% 
-% % Plot data points for each combination of CrosslinkTime and CrosslinkTemp
-% for i = 1:length(uniqueTimes2)
-%     for j = 1:length(uniqueTemps2)
-%         idx = crosslinkTime2 == uniqueTimes2(i) & crosslinkTemp2 == uniqueTemps2(j);
-%         scatter(modulusData2(idx), initialM2(idx), 100, 'MarkerEdgeColor', colors(i,:), 'Marker', markers{j}, 'DisplayName', sprintf('Time: %s, Temp: %s', string(uniqueTimes2(i)), string(uniqueTemps2(j))));
-%     end
-% end
-% 
-% xlabel('Stiffness');
-% ylabel('Initial Mass');
-% title('Scatter Plot of Stiffness vs Initial Mass 2');
-% legend('Location', 'best');
-% grid on;
-% hold off;
-% 
-% saveas(massStiffness2, root + "MTS Experiments/Ring/FIGURES/Initial Mass vs Stiffness 2.svg", 'svg');
-
-
-%% PLOT INITIAL MASS VS FINAL MASS
-% massTrends = figure;
-% hold on;
-% 
-% % Plot data points for each combination of CrosslinkTime and CrosslinkTemp
-% for i = 1:length(uniqueTimes)
-%     for j = 1:length(uniqueTemps)
-%         idx = crosslinkTime == uniqueTimes(i) & crosslinkTemp == uniqueTemps(j);
-%         scatter(finalM(idx), initialM(idx), 100, 'MarkerEdgeColor', colors(i,:), 'Marker', markers{j}, 'DisplayName', sprintf('Time: %s, Temp: %s', string(uniqueTimes(i)), string(uniqueTemps(j))));
-%     end
-% end
-% 
-% xlabel('Final Mass');
-% ylabel('Initial Mass');
-% title('Scatter Plot of Initial Mass vs Final Mass');
-% legend('Location', 'best');
-% grid on;
-% hold off;
-% 
-% saveas(massTrends, root + "MTS Experiments/Ring/FIGURES/Initial vs Final Mass.svg", 'svg');
-% 
-% % repeat for new samples
-% massTrends2 = figure;
-% hold on;
-% 
-% % Plot data points for each combination of CrosslinkTime and CrosslinkTemp
-% for i = 1:length(uniqueTimes2)
-%     for j = 1:length(uniqueTemps2)
-%         idx = crosslinkTime2 == uniqueTimes2(i) & crosslinkTemp2 == uniqueTemps2(j);
-%         scatter(finalM2(idx), initialM2(idx), 100, 'MarkerEdgeColor', colors(i,:), 'Marker', markers{j}, 'DisplayName', sprintf('Time: %s, Temp: %s', string(uniqueTimes2(i)), string(uniqueTemps2(j))));
-%     end
-% end
-% 
-% xlabel('Final Mass');
-% ylabel('Initial Mass');
-% title('Scatter Plot of Initial Mass vs Final Mass 2');
-% legend('Location', 'best');
-% grid on;
-% hold off;
-% 
-% saveas(massTrends2, root + "MTS Experiments/Ring/FIGURES/Initial vs Final Mass 2.svg", 'svg');
 
 %% PLOT INITIAL GEOMETRY 
 
@@ -1325,5 +1084,5 @@ saveas(areas_data_per_group, root + "MTS Experiments/Ring/FIGURES/Normalized Are
 % % Add a legend for the temperature groups
 % legend('uncrosslinked', '27 C', '37 C', 'Location', 'northwest');
 % hold off;
-% saveas(initialGeom, root + "MTS Experiments/Ring/FIGURES/Initial Geometry.svg", 'svg');
+% saveas(initialGeom, root + "/Experimental Data/FIGURES/Initial Geometry.svg", 'svg');
 
