@@ -1,0 +1,26 @@
+##TITLE= Audit trail, TopSpin 4.4.0
+##JCAMPDX= 5.01
+##ORIGIN= Bruker BioSpin GmbH & Co. KG
+##OWNER= root
+$$ /root/.topspin-BladeEpu/local_acqu/Alginate-AW-Aug2-2-60Deg/10/audita.txt
+##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+(   1,<2024-08-03T23:20:19.776+0000>,<CZC7388LZF\nmrsu>,<CZC7388LZF>,<go4>,<TopSpin 4.4.0>,
+      <acquisition in progress>)
+$$ C:/Bruker/TopSpin4.4.0/data/kschulz/nmr/Alginate-AW-Aug2-2-60Deg/10/audita.txt
+(   2,<2024-08-03T23:21:32.126+0000>,<CZC7388LZF\nmrsu>,<CZC7388LZF>,<go4>,<TopSpin 4.4.0>,
+      <created by zg on 'Avance' (CZC7388LZF) by user 'CZC7388LZF\nmrsu'
+       on data set with UUID 'f3313dd0-51ee-11ef-bb84-001395264cb0'
+       started at 2024-08-03 23:20:19.776 +0000, POWCHK enabled, PULCHK disabled,
+       completed at 2024-08-03 23:21:32.122 +0000
+       configuration hash MD5:
+       EE D6 32 09 DF 54 80 27 44 4F E1 81 02 BA 98 82
+       double data hash MD5: 64K
+       BA 52 AB C1 43 10 C0 99 26 F8 3E BD D7 B5 76 C2>)
+(   3,<2024-08-03T19:19:20.027-0400>,<nmrsu>,<CZC7388LZF>,<xwish3>,<TopSpin 4.4.0>,
+      <ICON-NMR User ID: kschulz
+       double data hash MD5: 64K
+       BA 52 AB C1 43 10 C0 99 26 F8 3E BD D7 B5 76 C2>)
+##END=
+
+$$ hash MD5
+$$ 7A 35 EE 33 D3 98 10 D5 43 7B 2E EA 64 75 3C 1D

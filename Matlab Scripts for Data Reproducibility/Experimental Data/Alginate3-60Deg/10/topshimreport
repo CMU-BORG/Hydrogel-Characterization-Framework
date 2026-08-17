@@ -1,0 +1,97 @@
+
+New TopShim run:
+
+version = topshim 4.4.0
+date = 2024-08-03
+time = 19:28:03.657
+command = topshim tunea ordmax=7
+
+FINE SHIMMING
+
+Parameters:
+
+probe = Z149001_0015
+solvent = D2O
+shim nucleus = 2H
+nucleus optimised for = 1H
+o1p (from lock) = 4.70 ppm
+
+Results:
+
+
+1D Shimming:
+Iteration 1: FWHM Before=18.0 Hz, Target= 0.6 Hz, After= 0.7 Hz
+Iteration 2: FWHM Before= 0.7 Hz, Target= 0.4 Hz, After= 0.5 Hz
+Iteration 3: FWHM Before= 0.5 Hz, Target= 0.2 Hz, After= 0.2 Hz
+Shim succeeded
+
+Lineshape quality factor (1D spectrum, spinning) = 0.433
+
+
+Performing tune after shimming
+tune lock level increase = 1.1
+
+shim changes: 
+Z	+392
+Z2	-52
+Z3	+290
+Z4	+134
+Z5	-509
+Z6	-403
+Z7	+6060
+X	+31
+XZ	-1
+Y	+3
+YZ	+1
+
+duration = 3 min 21 sec
+completed successfully
+finished Sat Aug  3 19:31:24 2024
+
+
+========================================================================
+
+New TopShim run:
+
+version = topshim 4.4.0
+date = 2024-08-03
+time = 19:31:38.888
+command = topshim 
+
+FINE SHIMMING
+
+Parameters:
+
+probe = Z149001_0015
+solvent = D2O
+shim nucleus = 2H
+nucleus optimised for = 1H
+o1p (from lock) = 4.70 ppm
+
+Results:
+
+
+1D Shimming:
+Iteration 1: FWHM Before= 0.3 Hz, Target= 0.3 Hz, After= 0.3 Hz
+Iteration 2: FWHM Before= 0.3 Hz, Target= 0.2 Hz, After= 0.3 Hz
+Iteration 3: FWHM Before= 0.3 Hz, Target= 0.2 Hz
+Shim succeeded
+
+Lineshape quality factor (1D spectrum, spinning) = 0.455
+
+shim changes: 
+Z	-19
+Z2	-6
+Z3	+32
+Z4	+166
+Z5	+10
+Z6	-1211
+Z7	+386
+Z8	+3192
+
+duration = 48 sec
+completed successfully
+finished Sat Aug  3 19:32:26 2024
+
+
+========================================================================

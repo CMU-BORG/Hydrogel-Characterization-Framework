@@ -1,0 +1,102 @@
+# Fri Aug  2 19:22:35 2024
+#$$PROBEIDENTIFIER=Z149001_0015
+#$$PROBENAME=CPP BBO 500S1 BB-H&F-D-05 Z
+#$$MAGNETID=BZH1705070E05
+#$$CRYOSTATID=D315-54-7893
+#$$SHIMID=292722
+#
+# Active Shim Gradients
+#
+Z           		5979            
+Z2          		980             
+Z3          		1614            
+Z4          		-7792           
+Z5          		-368            
+Z6          		4151            
+Z7          		2200            
+Z8          		-5525           
+X           		-159            
+XZ          		-1071           
+XZ2         		-3383           
+XZ3         		-1232           
+XZ4         		476             
+XZ5         		665             
+Y           		5808            
+YZ          		41              
+YZ2         		-2534           
+YZ3         		-295            
+YZ4         		1151            
+YZ5         		1126            
+XY          		-10066          
+XYZ         		-9085           
+XYZ2        		1807            
+XYZ3        		171             
+XYZ4        		-3447           
+XYZ5        		-908            
+(X2-Y2)     		11016           
+(X2-Y2)Z    		67              
+(X2-Y2)Z2   		-2488           
+(X2-Y2)Z3   		593             
+(X2-Y2)Z4   		220             
+(X2-Y2)Z5   		20              
+X3          		-6485           
+X3Z         		-3711           
+Y3          		-3408           
+Y3Z         		-1203           
+#
+# Lock Parameter
+#
+FIELD		6562.779
+LOCKPHASE		  12.476
+LOCKPOWER		 -18.000
+LOCKGAIN		  98.219
+LOCKDC		 -59.400
+LOCKSHIFT		   4.700
+LOOPGAIN		   4.696
+LOOPTIME		   0.145
+LOOPFILTER		 280.759
+#
+IEEE64_VERSION_CODE 1
+#
+# Shim currents 
+#
+SHIM_SETTING [ 1]     3374.20410197
+SHIM_SETTING [ 2]     1586.83122334
+SHIM_SETTING [ 3]      358.13923193
+SHIM_SETTING [ 4]    -3954.73437942
+SHIM_SETTING [ 5]      940.61073598
+SHIM_SETTING [ 6]     1182.68369021
+SHIM_SETTING [ 7]    -5800.61991627
+SHIM_SETTING [ 8]   -10936.98508855
+SHIM_SETTING [ 9]     -987.37177852
+SHIM_SETTING [10]    -2185.90840236
+SHIM_SETTING [11]        0.00000000
+SHIM_SETTING [12]    -2205.79500000
+SHIM_SETTING [13]    -4610.94000000
+SHIM_SETTING [14]    -1345.08900082
+SHIM_SETTING [15]    -5190.59433235
+SHIM_SETTING [16]    -1283.66232218
+SHIM_SETTING [17]     2417.01657117
+SHIM_SETTING [18]      682.30343025
+SHIM_SETTING [19]      924.12809879
+SHIM_SETTING [20]     1714.89959114
+SHIM_SETTING [21]     5251.38602461
+SHIM_SETTING [22]     4230.26302285
+SHIM_SETTING [23]    12297.05099817
+SHIM_SETTING [24]    12939.14999850
+SHIM_SETTING [25]     5743.24201603
+SHIM_SETTING [26]     4487.07701693
+SHIM_SETTING [27]    -4945.19500302
+SHIM_SETTING [28]     3576.46926238
+SHIM_SETTING [29]    -9657.00900044
+SHIM_SETTING [30]    -4122.13502076
+SHIM_SETTING [31]     6860.53629723
+SHIM_SETTING [32]     3246.13526126
+SHIM_SETTING [33]   -15532.28401911
+SHIM_SETTING [34]     2920.76798001
+SHIM_SETTING [35]   -14758.93898679
+SHIM_SETTING [36]    -1125.03801149
+SHIM_SETTING [37]     3479.71256412
+SHIM_SETTING [38]     5329.90031756
+SHIM_SETTING [39]     5727.53472796
+SHIM_SETTING [40]        0.00000000

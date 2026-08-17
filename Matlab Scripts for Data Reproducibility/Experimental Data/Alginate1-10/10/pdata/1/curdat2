@@ -1,0 +1,17 @@
+##TITLE= Parameter file, TopSpin 4.3.0
+##JCAMPDX= 5.0
+##DATATYPE= Parameter Values
+##NPOINTS= 1	$$ modification sequence number
+##ORIGIN= Bruker BioSpin GmbH
+##OWNER= averywilliamson
+$$ 2024-09-12 14:22:18.739 -0400  averywilliamson@macbook-pro-339.wifi.local.cmu.edu
+$$ /Users/averywilliamson/Desktop/BORG/HNMR/60C:333K/Alginate1-10/10/pdata/1/curdat2
+$$ process /opt/topspin4.3.0/prog/mod/dataserver
+##$DATPATH2= </Users/averywilliamson/Desktop/BORG/HNMR/60C:333K>
+##$DU2= <>
+##$EXPNO2= 10
+##$NAME2= <Alginate1-10>
+##$PROCNO2= 999
+##$TYPE= <>
+##$USER2= <>
+##END=

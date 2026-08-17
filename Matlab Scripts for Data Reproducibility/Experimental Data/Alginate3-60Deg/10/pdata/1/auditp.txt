@@ -1,0 +1,57 @@
+##TITLE= Audit trail, TopSpin 4.3.0
+##JCAMPDX= 5.01
+##ORIGIN= Bruker BioSpin GmbH
+##OWNER= averywilliamson
+$$ /Users/averywilliamson/Desktop/BORG/HNMR/60C:333K/Alginate3-60Deg/10/pdata/1/auditp.txt
+##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+(   1,<2024-08-03T23:34:53.725+0000>,<CZC7388LZF\nmrsu>,<CZC7388LZF>,<go4>,<TopSpin 4.4.0>,
+      <acquisition in progress>)
+$$ C:/Bruker/TopSpin4.4.0/data/kschulz/nmr/Alginate-AW-Aug2-3-60Deg/10/audita.txt
+(   2,<2024-08-03T23:36:04.968+0000>,<CZC7388LZF\nmrsu>,<CZC7388LZF>,<go4>,<TopSpin 4.4.0>,
+      <created by zg on 'Avance' (CZC7388LZF) by user 'CZC7388LZF\nmrsu'
+       on data set with UUID 'fc1ba33e-51f0-11ef-a66f-001395264cb0'
+       started at 2024-08-03 23:34:53.725 +0000, POWCHK enabled, PULCHK disabled,
+       completed at 2024-08-03 23:36:04.964 +0000
+       configuration hash MD5:
+       EE D6 32 09 DF 54 80 27 44 4F E1 81 02 BA 98 82
+       double data hash MD5: 64K
+       26 FA 6D 60 09 79 10 A7 5A 81 85 E8 C0 04 8C 47>)
+(   3,<2024-08-03T19:33:52.815-0400>,<nmrsu>,<CZC7388LZF>,<xwish3>,<TopSpin 4.4.0>,
+      <ICON-NMR User ID: kschulz
+       double data hash MD5: 64K
+       26 FA 6D 60 09 79 10 A7 5A 81 85 E8 C0 04 8C 47>)
+(   4,<2024-09-12T13:39:58.709-0400>,<averywilliamson>,<macbook-pro-339.wifi.local.cmu.edu>,<proc1d>,<TopSpin 4.3.0>,
+      <Start of raw data processing
+       em LB = 0.3 SI = 64K 
+       data hash MD5: 64K
+       11 1D 02 8C 97 6F E1 C3 11 81 7B D9 49 A7 2F AE>)
+(   5,<2024-09-12T13:39:58.795-0400>,<averywilliamson>,<macbook-pro-339.wifi.local.cmu.edu>,<proc1d>,<TopSpin 4.3.0>,
+      <ft FT_mod = 6 PKNL = 1 SI = 64K 
+       data hash MD5: 64K
+       F5 8B 42 36 93 A5 C8 37 6F 40 44 CC CB F8 2F 8B>)
+(   6,<2024-09-12T13:39:59.061-0400>,<averywilliamson>,<macbook-pro-339.wifi.local.cmu.edu>,<proc1d>,<TopSpin 4.3.0>,
+      <apk 
+       data hash MD5: 64K
+       4C EF C9 BB DD F5 0B D1 03 86 78 15 92 9B 81 8B>)
+(   7,<2024-09-12T13:39:59.162-0400>,<averywilliamson>,<macbook-pro-339.wifi.local.cmu.edu>,<proc1d>,<TopSpin 4.3.0>,
+      <abs n ABSG = 5 
+       data hash MD5: 64K
+       E1 AE 48 C8 4F 55 57 0B 2E 48 31 54 91 B4 8F AD>)
+(   8,<2024-09-12T14:35:25.136-0400>,<averywilliamson>,<macbook-pro-339.wifi.local.cmu.edu>,<dataserver>,<TopSpin 4.3.0>,
+      <mldcon 
+       Metric = 63.06 % reconstructed
+       data hash MD5: 64K
+       E1 AE 48 C8 4F 55 57 0B 2E 48 31 54 91 B4 8F AD>)
+(   9,<2024-11-01T18:18:55.772-0400>,<averywilliamson>,<MacBook-Pro-339.local>,<dataserver>,<TopSpin 4.3.0>,
+      <mldcon -display
+       data hash MD5: 64K
+       E1 AE 48 C8 4F 55 57 0B 2E 48 31 54 91 B4 8F AD>)
+$$ /Users/averywilliamson/Google Drive/Shared drives/CMU BORG - Hydrogel Printing/ALGINATE CHARACTERIZATION/HNMR/60C:333K/Alginate3-60Deg/10/pdata/1/auditp.txt
+(  10,<2024-11-20T16:36:07.481-0500>,<averywilliamson>,<macbook-pro-362.wifi.local.cmu.edu>,<dataserver>,<TopSpin 4.3.0>,
+      <mldcon -display
+       data hash MD5: 64K
+       E1 AE 48 C8 4F 55 57 0B 2E 48 31 54 91 B4 8F AD>)
+##END=
+
+$$ hash MD5
+$$ A4 12 27 2B 78 A7 96 FF EC DB 93 C0 78 C2 1B C6

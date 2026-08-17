@@ -1,0 +1,16 @@
+##TITLE= Parameter file, TopSpin 4.3.0
+##JCAMPDX= 5.0
+##DATATYPE= Parameter Values
+##NPOINTS= 3	$$ modification sequence number
+##ORIGIN= Bruker BioSpin GmbH & Co. KG
+##OWNER= nmrsu
+$$ 2024-09-12 14:23:14.367 -0400  averywilliamson@macbook-pro-339.wifi.local.cmu.edu
+$$ /Users/averywilliamson/Desktop/BORG/HNMR/60C:333K/Alginate1-10/10/pdata/1/outd
+$$ process /opt/topspin4.3.0/prog/mod/dataserver
+##$CURPLOT= <>
+##$CURPRIN= <dconpeaks.txt>
+##$DFORMAT= <normdp>
+##$LAYOUT= <+/1D_H.xwp>
+##$LFORMAT= <normlp>
+##$PFORMAT= <normpl>
+##END=

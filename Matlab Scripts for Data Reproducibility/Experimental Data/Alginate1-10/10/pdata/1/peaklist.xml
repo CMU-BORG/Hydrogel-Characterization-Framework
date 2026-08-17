@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PeakList modified="2024-11-01T17:43:41">
+  <PeakList1D>
+    <PeakList1DHeader creator="averywilliamson@MacBook-Pro-339.local" date="2024-11-01T17:44:01" expNo="10" name="Alginate1-10" owner="averywilliamson" procNo="1" source="/Users/averywilliamson/Desktop/BORG/HNMR/60C:333K">
+      <PeakPickDetails>Manually picked peaks
+</PeakPickDetails>
+    </PeakList1DHeader>
+    <Peak1D F1="5.362648019117338" intensity="0.020408868357016663" type="1"/>
+    <Peak1D F1="5.071579721684869" intensity="0.011084269784095074" type="1"/>
+    <Peak1D F1="5.040190003334308" intensity="0.019282617604555356" type="1"/>
+    <Peak1D F1="5.002379660775679" intensity="0.020009686407460495" type="1"/>
+    <Peak1D F1="4.966709526286405" intensity="0.03010217787302963" type="1"/>
+    <Peak1D F1="4.764816565077119" intensity="0.03321076955958219" type="1"/>
+  </PeakList1D>
+</PeakList>
