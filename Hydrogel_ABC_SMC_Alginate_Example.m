@@ -48,7 +48,8 @@ timestamp = datestr(now, 'yyyymmdd_HHMM');
 %% Loading experimental data and calculating the summary metrics for each time point in the experiment
 
 % load the data that you have from your experiments
-root = "placeholder";
+currentFolder = pwd;
+root = currentFolder + "/Experimental Data/";
 
 inventory_file = "Inventory Final.xlsx";
 inventory = readtable(root + inventory_file,"ReadVariableNames",true);
@@ -455,7 +456,7 @@ for kk = 1:T
         intermediate_distributions(kk,:) = {weights, mean_E0_samps, sig_E0_samps, ...
         mean_dE_samps, sig_dE_samps, rho_samps, mean_tau_samps, sig_tau_samps, samples_parameters};
 
-        save(root + "MTS Experiments/Ring/computation/ABC_SMC_intermediate_" + timestamp + ".mat", "intermediate_distributions");
+        save(root + "/Experimental Data/computation/ABC_SMC_intermediate_" + timestamp + ".mat", "intermediate_distributions");
 
 %% === Plot mean and spread of accepted particles (no new variables) ===
         
@@ -505,7 +506,7 @@ for kk = 1:T
     title("Gen " + kk + ": IQR of Stiffness");
     xlabel("Time (min)"); ylabel("IQR (kPa)");
     
-    saveas(simulatedCurves, root + "MTS Experiments/Ring/FIGURES/simulatedCurves/simulatedCurves_" + timestamp + "_" + kk + ".svg", 'svg');
+    saveas(simulatedCurves, root + "/Experimental Data/FIGURES/simulatedCurves/simulatedCurves_" + timestamp + "_" + kk + ".svg", 'svg');
 
 end
 
@@ -552,7 +553,7 @@ final_posterior = struct( ...
     "sig_tau", resampled_sig_tau ...
 );
 
-%save(root + "MTS Experiments/Ring/computation/ABC_SMC_final_" + timestamp + ".mat", "final_posterior");
+%save(root + "/Experimental Data/computation/ABC_SMC_final_" + timestamp + ".mat", "final_posterior");
 
 summary_stats = struct( ...
     "median_mean_E0", median(resampled_mean_E0), ...
@@ -560,7 +561,7 @@ summary_stats = struct( ...
     "tau_credible_interval", quantile(resampled_mean_tau, [0.025, 0.975]) ...
 );
 
-%save(root + "MTS Experiments/Ring/computation/ABC_SMC_summary_" + timestamp + ".mat", "summary_stats");
+%save(root + "/Experimental Data/computation/ABC_SMC_summary_" + timestamp + ".mat", "summary_stats");
 
 
 
@@ -697,7 +698,7 @@ xlabel("Time (min)"); ylabel("Effective Elastic Modulus (kPa)");
 legend('95% CI', 'Simulated Particles', 'IQR', 'Raw Data Points', 'Median Posterior Fit', 'Location', 'southeast');
 
 timestamp = datestr(now, 'yyyymmdd_HHMM');
-saveas(variabilityModel, root + "MTS Experiments/Ring/FIGURES/variabilityModel_" + timestamp + ".svg", 'svg');
+saveas(variabilityModel, root + "/Experimental Data/FIGURES/variabilityModel_" + timestamp + ".svg", 'svg');
 
 
 %% ---- explicit posterior parameter output ----
