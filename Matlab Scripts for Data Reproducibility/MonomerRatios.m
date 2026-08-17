@@ -2,7 +2,8 @@
 
 clear all; close all; %clc
 
-root = "/Users/averywilliamson/Library/CloudStorage/GoogleDrive-averyw@andrew.cmu.edu/Shared drives/CMU BORG - Hydrogel Printing and Biodegradable Robots/ALGINATE CHARACTERIZATION/HNMR/60C:333K";
+currentFolder = pwd;
+root = currentFolder + "/Experimental Data/";
 
 filename = "mldcon.csv";
 sample1 = readtable(root + "/Alginate1-10/10/pdata/1/" + filename, "ReadVariableNames",true);
