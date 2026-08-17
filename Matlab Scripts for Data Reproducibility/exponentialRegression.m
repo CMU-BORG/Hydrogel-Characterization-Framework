@@ -1,10 +1,12 @@
 %% initialize data arrays
 clear all; close all; %clc
 
-root = "/Users/averywilliamson/Library/CloudStorage/GoogleDrive-averyw@andrew.cmu.edu/Shared drives/CMU BORG - Hydrogel Printing and Biodegradable Robots/ALGINATE CHARACTERIZATION/";
+currentFolder = pwd;
+root = currentFolder + "/Experimental Data/";
 
 inventory_file = "Inventory Final.xlsx";
-inventory = readtable(root+"MTS Experiments/Ring/" + inventory_file,"ReadVariableNames",true);
+inventory = readtable(root + inventory_file,"ReadVariableNames",true);
+
 inventoryE = inventory(:, [3, 4, 16]);
 
 % Sort data by crosslinkTemp
