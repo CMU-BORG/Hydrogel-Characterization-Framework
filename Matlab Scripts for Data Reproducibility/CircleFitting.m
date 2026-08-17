@@ -12,8 +12,8 @@ inventory = readtable(root+inventory_file,"ReadVariableNames",true);
 A = zeros(length(inventory.Folder), 25);
 
 %% loop through samples
-%for sample = 23:(length(inventory.Folder))
-sample = 8;
+for sample = 1:(length(inventory.Folder))
+
     if isnan(inventory.CrosslinkTime(sample))
         A(sample) = zeros(1, length(A(sample)));
         %continue
@@ -35,7 +35,6 @@ sample = 8;
     col = 1;
     % for every frame file in the sample folder
     for i = 1:length(frame_files)
-    %i = 8;
        
         frame = frame_files{i};
         if frame((1)) ~= 't'
@@ -50,13 +49,14 @@ sample = 8;
         %% find blue parts
 
         % Define thresholds for the blue color
-        
-        if sample == 1 || sample == 7 || sample > 13 
+        % optionally set specific thresholds for specific samples (based on lighting condition changes, reflections, etc)
+        if sample == 1
             hue_min = 0.53;
             hue_max = 0.57;
             sat_min = 0.91; % Adjust based on the saturation level of blue in your image
             val_min = 0.3; % Adjust based on the brightness level
-        elseif sample == 2 
+            
+        elseif 
             hue_min = 0.556;
             hue_max = 0.58;
             sat_min = 0.95; % Adjust based on the saturation level of blue in your image
