@@ -3,11 +3,11 @@
 clear all; close all; %clc
 
 % Define folder path containing images (converted from SVGs)
-root = "/Users/averywilliamson/Library/CloudStorage/GoogleDrive-averyw@andrew.cmu.edu/Shared drives/CMU BORG - Hydrogel Printing/ALGINATE CHARACTERIZATION/MTS Experiments/Ring/";
+currentFolder = pwd;
+root = currentFolder + "/Experimental Data/";
 
-inventory_file = "Inventory.xlsx";
-
-inventory = readtable(root+inventory_file,"ReadVariableNames",true);
+inventory_file = "Inventory Final.xlsx";
+inventory = readtable(root + inventory_file,"ReadVariableNames",true);
 
 imageFolder = root + inventory.Folder(21) + "/figs";
 
