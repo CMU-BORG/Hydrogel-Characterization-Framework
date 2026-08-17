@@ -357,7 +357,7 @@ box on; % Draw box around the plot
 %pbaspect([3, 3, 1]);
 
 hold off;
-%saveas(stiffness, root + "MTS Experiments/Ring/FIGURES/Effective Elastic Modulus vs Crosslink Time.svg", 'svg');
+%saveas(stiffness, root + "/FIGURES/Effective Elastic Modulus vs Crosslink Time.svg", 'svg');
 
 
 %% PLOT NET SWELLING GROUPS
@@ -409,7 +409,7 @@ box on; % Draw box around the plot
 %pbaspect([3, 3, 1]);
 currentFolder = pwd;
 
-saveas(mass, root + "/Experimental Data/FIGURES/Mass Swelling vs Crosslink Time Group.svg", 'svg');
+saveas(mass, root + "/FIGURES/Mass Swelling vs Crosslink Time Group.svg", 'svg');
 
 %% FITTED MODELS DATA
 
@@ -465,7 +465,7 @@ title('Fitted Effective Elastic Modulus vs Crosslink Time');
 txt = "y(x) = 0.179 - 0.062e^{-0.648x}" + newline + "R^2 = " + gof27E.rsquare;
 legend('27C', txt, 'Location', 'southeast');
 
-saveas(modulusFits, root + "/Experimental Data/FIGURES/Fitted Effective Elastic Modulus vs Crosslink Time.svg", 'svg');
+saveas(modulusFits, root + "/FIGURES/Fitted Effective Elastic Modulus vs Crosslink Time.svg", 'svg');
 
 swellingFits = figure;
 hold on;
@@ -477,7 +477,7 @@ title('Negative Swelling vs Crosslink Time');
 txt = "y(x) = 13.61 - 12.86e^{-13.61x}" + newline + "R^2 = " + gof27SM.rsquare;
 legend('27C', txt, 'Location', 'southeast');
 
-saveas(swellingFits, root + "/Experimental Data/FIGURES/Fitted Negative Swelling vs Crosslink Time.svg", 'svg');
+saveas(swellingFits, root + "/FIGURES/Fitted Negative Swelling vs Crosslink Time.svg", 'svg');
 
 
 %% PROCESS DYNAMIC SWELLING DATA 
@@ -650,7 +650,7 @@ title('Exponential Fits for Normalized Area over Time');
 grid off;
 hold off;
 
-% saveas(areaOverTime, root + "/Experimental Data/FIGURES/Normalized Area Over Time (all samples combined).svg", 'svg');
+% saveas(areaOverTime, root + "/FIGURES/Normalized Area Over Time (all samples combined).svg", 'svg');
 
 %% PLOT DYNAMIC SWELLING (sample means, one plot) 
 
@@ -690,7 +690,7 @@ xticks(linspace(0, 360, 25));
 ylim([80, 100]);
 yticks(linspace(80, 100, 5));
 
-saveas(areaOverTime, root + "/Experimental Data/FIGURES/Normalized Area Over Time Summary.svg", 'svg');
+saveas(areaOverTime, root + "/FIGURES/Normalized Area Over Time Summary.svg", 'svg');
 
 %% PLOT DYNAMIC SWELLING (sample means, different plots)
 
@@ -793,7 +793,7 @@ set(hr6, 'Units', 'inches', 'Position', [1, 1, height * 3, height]);
 % Adjust figure size for readability
 set(meanAreas, 'Units', 'normalized', 'Position', [0.1 0.1 0.95 0.5]);
 
-saveas(meanAreas, root + "/Experimental Data/FIGURES/Normalized Area over Time (Sample Means).svg", 'svg');
+saveas(meanAreas, root + "/FIGURES/Normalized Area over Time (Sample Means).svg", 'svg');
 
 % plot individually 
 % 2hr
@@ -876,9 +876,9 @@ set(hr2, 'Units', 'inches', 'Position', [1, 1, height * 1, height]);
 set(hr4, 'Units', 'inches', 'Position', [1, 1, height * 2, height]);
 set(hr6, 'Units', 'inches', 'Position', [1, 1, height * 3, height]);
 
-saveas(hr2, root + "/Experimental Data/FIGURES/Normalized Area over Time (2Hr Sample Means).svg", 'svg');
-saveas(hr4, root + "/Experimental Data/FIGURES/Normalized Area over Time (4Hr Sample Means).svg", 'svg');
-saveas(hr6, root + "/Experimental Data/FIGURES/Normalized Area over Time (6Hr Sample Means).svg", 'svg')
+saveas(hr2, root + "/FIGURES/Normalized Area over Time (2Hr Sample Means).svg", 'svg');
+saveas(hr4, root + "/FIGURES/Normalized Area over Time (4Hr Sample Means).svg", 'svg');
+saveas(hr6, root + "/FIGURES/Normalized Area over Time (6Hr Sample Means).svg", 'svg')
 
 
 %% PLOT DYNAMIC SWELLING (specific groups)
@@ -969,7 +969,7 @@ saveas(areas_data_per_group, root + "/Experimental Data/FIGURES/Normalized Area 
 % xlim([0 2]);
 % ytickangle(45);
 % 
-% saveas(monomerComposition, root + "/Experimental Data/FIGURES/Monomer Composition of Alginates.svg", 'svg');
+% saveas(monomerComposition, root + "/FIGURES/Monomer Composition of Alginates.svg", 'svg');
 % 
 %% PLOT MONOMER RATIOS (add samples from HNMR)
 % 
@@ -1009,48 +1009,8 @@ saveas(areas_data_per_group, root + "/Experimental Data/FIGURES/Normalized Area 
 % ytickangle(45);
 % ylim([0 numel(selected_species) + 1]);
 % 
-% saveas(monomerComposition2, root + "/Experimental Data/FIGURES/Monomer Composition of Alginates (no samples).svg", 'svg');
+% saveas(monomerComposition2, root + "/FIGURES/Monomer Composition of Alginates (no samples).svg", 'svg');
 
-%% PLOT NET GEOMETRIC SWELLING 
-
-% percentG = (initialA - finalA) ./ initialA * 100;
-% meanPercentG = groupsummary(percentG, [crosslinkTime, crosslinkTemp],'mean');
-% meanPG0 = [meanPercentG(1)];
-% meanPG27 = [meanPercentG(2); meanPercentG(4); meanPercentG(6)];
-% meanPG37 = [meanPercentG(3); meanPercentG(5); meanPercentG(7)];
-% 
-% % Create the boxchart
-% swelling = figure;
-% hold on;
-% 
-% % Plot the data using boxchart, with crosslink time on the x-axis and effective modulus as the y-axis
-% % Group by color based on temperature
-% boxchart(xShiftedBox, percentG, 'GroupByColor', crosslinkTemp);
-% colororder(colors);
-% 
-% scatter([1.875, 2.875, 3.875], meanPG27, "Marker", "o", "MarkerFaceColor","#4DBEEE");
-% scatter([2.125, 3.125, 4.125], meanPG37, "Marker", "o", "MarkerFaceColor","#D95319");
-% 
-% gscatter(xShifted, percentG, crosslinkTemp, [], 'o'); 
-% 
-% % Adjust the labels and title
-% xlabel('Crosslink Time (hr)');
-% ylabel('Negative Swelling (% Change in Area)');
-% title('Geometric Swelling vs Crosslink Time');
-% 
-% % Adjust X-tick labels if needed (e.g., if you want to display them as '2hr', '4hr', '6hr')
-% xticks(positions);
-% xticklabels(strcat(string(unique(crosslinkTime)), 'hr'));
-% 
-% % Add a legend for the temperature groups
-% legend('uncrosslinked', '27 C', '37 C', 'Location', 'northwest');
-% 
-% % Customize the appearance if desired (optional)
-% set(gca, 'FontSize', 12); % Adjust font size for better readability
-% box on; % Draw box around the plot
-% 
-% 
-% saveas(swelling, root + "MTS Experiments/Ring/FIGURES/Geometric Swelling vs Crosslink Time Group.svg", 'svg');
 
 
 
@@ -1084,5 +1044,5 @@ saveas(areas_data_per_group, root + "/Experimental Data/FIGURES/Normalized Area 
 % % Add a legend for the temperature groups
 % legend('uncrosslinked', '27 C', '37 C', 'Location', 'northwest');
 % hold off;
-% saveas(initialGeom, root + "/Experimental Data/FIGURES/Initial Geometry.svg", 'svg');
+% saveas(initialGeom, root + "/FIGURES/Initial Geometry.svg", 'svg');
 
