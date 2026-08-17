@@ -1,6 +1,7 @@
 clear all; close all; %clc
 
-root = "/Users/averywilliamson/Library/CloudStorage/GoogleDrive-averyw@andrew.cmu.edu/Shared drives/CMU BORG - Hydrogel Printing/ALGINATE CHARACTERIZATION/MTS Experiments/Ring/";
+currentFolder = pwd;
+root = currentFolder + "/Experimental Data/";
 
 inventory_file = "Inventory.xlsx";
 
