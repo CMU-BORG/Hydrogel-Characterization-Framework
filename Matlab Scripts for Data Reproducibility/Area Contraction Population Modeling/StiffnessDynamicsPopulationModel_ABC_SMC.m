@@ -113,13 +113,13 @@ parameter_labels = {"\mu_{E_0}","\mu_{\Delta E}",...
                     "\beta_\mu","\beta_\sigma"};
 
 
-%% Step 1: Estimate the initial mass distribution using standard SMC
+%% Step 1: Estimate the initial distribution using standard SMC
 gammas_ = (linspace(0,1,5)');
 
 transforms = cell(1,1);
 transforms{1} = {2, LogTransform()};
 
-% Getting an M0 distribution using all of the M0 data
+% Getting an E0 distribution using all of the E0 data
 model_norm_prior = GaussianModel(0);
 E0_prior = SMC_Sampler(2000,model_norm_prior,priors([1,3]),2.38,data(data(:,1)==-1,3),gammas_,{"\mu_{E_0}","\sigma_{E_0}"},{},transforms,1);
 E0_prior.GeneratePosterior();
