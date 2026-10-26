@@ -36,7 +36,7 @@ E = combinedData.EffectiveElasticModulus;
 A_file = "Areas Final new.csv";
 A = readmatrix(root+A_file);
 
-Anorm = A(:, :)./A(:, 1) * 100;
+Anorm = A(:, :)./A(:, 1);
 
 Anorm(Anorm==0) = nan;
 
@@ -86,7 +86,7 @@ for tg = time_groups
     data_table = array2table(data, 'VariableNames', {'t', 'X', 'Anorm'});
     
     % Define the fit equation
-    fit_func = @(b, t, X) b(1) * exp(-t .* (b(2) + b(3) .* X)) + b(4) + b(5) .* X;
+    fit_func = @(b, t, X) (1 - b(3) - b(4).*X) .* exp(-t .* (b(1) + b(2) .* X)) + b(3) + b(4) .* X;
     
     % Extract t, X, and Anorm values for fitting
     t_values = data_table.t;
@@ -94,7 +94,8 @@ for tg = time_groups
     Anorm_values = data_table.Anorm;
     
     % Initial guess for the coefficients
-    initial_guess = [15, .1, .1, 80, 1];
+    %initial_guess = [15, .1, .1, 80, 1];
+    initial_guess = [0.1, 0.1, 0.85, 0.01];
     
     % Define lower bounds for the coefficients
     lower_bounds = [0, 0, 0, 0, 0];
