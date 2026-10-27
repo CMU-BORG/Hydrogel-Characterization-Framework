@@ -114,6 +114,7 @@ alpha_posterior = [alpha_mu_est, alpha_sig_est];
 alpha_prior = Dummy_Sampler(alpha_posterior,{"\alpha_\mu","\alpha_\sigma"},{},priors([8,9]),1);
 alpha_prior.PlotPosteriorHistograms();
 
+
 %% Step 2: Converge a starting proposal for the Gamma parameters
 
 % Getting a tau distribution using the 27 C data
@@ -136,6 +137,7 @@ beta_posterior = [beta_mu_est, beta_sig_est];
 beta_prior = Dummy_Sampler(beta_posterior,{"\beta_\mu","\beta_\sigma"},{},priors([10,11]),1);
 
 beta_prior.PlotPosteriorHistograms();
+
 
 %% Step 3: Construct the sampler using the pre-convergence proposal distributions to get full joint posterior
 gammas_ = linspace(0.75,1,5)'; % because we already have a good starting place, we don't have to start all the way at the prior again, but can start most of the way to the posterior
@@ -202,3 +204,64 @@ std_37 = std(trajectories,[],1);
 %     plot(t,trajectories(i,:),"Color",[1,0.5,0.5]*rand(1),"LineWidth",0.1)
 % end
 errorbar(t,mean_37,std_37,std_37,'vertical','Marker','s','MarkerFaceColor','b','Color','b')
+
+
+%% save figures 
+
+%% Save all figures
+resultsDir = fullfile(pwd, "SMC_results_" + string(timestamp));
+if ~exist(resultsDir, "dir")
+    mkdir(resultsDir);
+end
+
+figNames = {
+    "A0_mu_convergence.svg"
+    "A0_sigma_convergence.svg"
+    "dA27_mu_convergence.svg"
+    "dA27_sigma_convergence.svg"
+    "dA37_mu_convergence.svg"
+    "dA37_sigma_convergence.svg"
+    "alpha_mu_histogram.svg"
+    "alpha_sigma_histogram.svg"
+    "tau27_mu_convergence.svg"
+    "tau27_sigma_convergence.svg"
+    "tau37_mu_convergence.svg"
+    "tau37_sigma_convergence.svg"
+    "beta_mu_histogram.svg"
+    "beta_sigma_histogram.svg"
+    "full_mu_A0_convergence.svg"
+    "full_mu_dA_convergence.svg"
+    "full_sigma_A0_convergence.svg"
+    "full_sigma_dA_convergence.svg"
+    "full_rho_convergence.svg"
+    "full_mu_tau_convergence.svg"
+    "full_sigma_tau_convergence.svg"
+    "full_alpha_mu_convergence.svg"
+    "full_alpha_sigma_convergence.svg"
+    "full_beta_mu_convergence.svg"
+    "full_beta_sigma_convergence.svg"
+    "full_mu_A0_histogram.svg"
+    "full_mu_dA_histogram.svg"
+    "full_sigma_A0_histogram.svg"
+    "full_sigma_dA_histogram.svg"
+    "full_rho_histogram.svg"
+    "full_mu_tau_histogram.svg"
+    "full_sigma_tau_histogram.svg"
+    "full_alpha_mu_histogram.svg"
+    "full_alpha_sigma_histogram.svg"
+    "full_beta_mu_histogram.svg"
+    "full_beta_sigma_histogram.svg"
+    "mean_posterior_prediction.svg"
+    };
+
+figs = findall(groot, "Type", "figure");
+[~, idx] = sort(arrayfun(@(f) f.Number, figs));
+figs = figs(idx);
+
+if numel(figs) ~= numel(figNames)
+    error("Found %d figures, but expected %d.", numel(figs), numel(figNames));
+end
+
+for k = 1:numel(figs)
+    exportgraphics(figs(k), fullfile(resultsDir, figNames{k}), "ContentType", "vector");
+end
