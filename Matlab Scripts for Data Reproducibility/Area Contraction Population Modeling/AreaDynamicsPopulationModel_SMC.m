@@ -206,7 +206,147 @@ std_37 = std(trajectories,[],1);
 errorbar(t,mean_37,std_37,std_37,'vertical','Marker','s','MarkerFaceColor','b','Color','b')
 
 
-%% save figures 
+%% Compare first and last generation particle trajectories for one temperature
+
+tempCondition = 0;  % 0 = 27C, 1 = 37C
+dataTemp = data(data(:,1) == tempCondition, :);
+tPlot = linspace(0, 360, 200);
+nShow = 100;
+rng(1);  % reproducible selection
+
+% particleHistory = sampler.particle_history;
+% 
+% firstGenParticles = squeeze(particleHistory(1, :, :));   % 5000 x 11
+% lastGenParticles  = squeeze(particleHistory(end, :, :)); % 5000 x 11
+
+% Build a synthetic pre-convergence ensemble from stage-1/2 posterior samples
+nPrePool = size(A0_prior.posterior, 1);
+preGenParticles = zeros(nPrePool, 11);
+
+for k = 1:nPrePool
+    iA = randi(size(A0_prior.posterior, 1));
+    iD = randi(size(dA_27_prior.posterior, 1));
+    iT = randi(size(tau_27_prior.posterior, 1));
+    iAlpha = randi(size(alpha_prior.posterior, 1));
+    iBeta = randi(size(beta_prior.posterior, 1));
+
+    preGenParticles(k,:) = [
+        A0_prior.posterior(iA,1), ...
+        dA_27_prior.posterior(iD,1), ...
+        A0_prior.posterior(iA,2), ...
+        dA_27_prior.posterior(iD,2), ...
+        random(rho_A_prior), ...
+        tau_27_prior.posterior(iT,1), ...
+        tau_27_prior.posterior(iT,2), ...
+        alpha_prior.posterior(iAlpha,1), ...
+        alpha_prior.posterior(iAlpha,2), ...
+        beta_prior.posterior(iBeta,1), ...
+        beta_prior.posterior(iBeta,2)];
+end
+
+% Final post-convergence generation from the joint sampler
+postGenParticles = squeeze(sampler.particle_history(end, :, :));
+
+idxPre = randperm(size(preGenParticles, 1), min(nShow, size(preGenParticles, 1)));
+idxPost = randperm(size(postGenParticles, 1), min(nShow, size(postGenParticles, 1)));
+% idxFirst = randperm(size(firstGenParticles, 1), min(nShow, size(firstGenParticles, 1)));
+% idxLast  = randperm(size(lastGenParticles, 1),  min(nShow, size(lastGenParticles, 1)));
+
+figure("Color","w","Position",[100,100,700,450]); hold on
+
+% plot first gen (pre-conv)
+
+% nFirst = numel(idxFirst);
+% endValsFirst = zeros(nFirst, 1);
+% trajStoreFirst = zeros(nFirst, numel(tPlot));
+nPre = numel(idxPre);
+endValsPre = zeros(nPre, 1);
+trajStorePre = zeros(nPre, numel(tPlot));
+
+for k = 1:nPre %nFirst
+    % theta = firstGenParticles(idxFirst(k), :).';
+    % model.setParams(theta);
+    % [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+    % 
+    % trajNorm = traj(1,:) ./ traj(1,1);
+    % endValsFirst(k) = trajNorm(end);
+    % trajStoreFirst(k,:) = trajNorm;
+
+    theta = preGenParticles(idxPre(k), :).';
+    model.setParams(theta);
+    [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+
+    trajNorm = traj(1,:) ./ traj(1,1);
+    endValsPre(k) = trajNorm(end);
+    trajStorePre(k,:) = trajNorm;
+end
+
+% qFirst = quantile(endValsFirst, [0.25 0.75]);
+% keepFirst = endValsFirst >= qFirst(1) & endValsFirst <= qFirst(2);
+% plot(tPlot, trajStoreFirst(keepFirst,:)', "Color", [0.82 0.82 0.82], "LineWidth", 0.8);
+
+qPre = quantile(endValsPre, [0.25 0.75]);
+keepPre = endValsPre >= qPre(1) & endValsPre <= qPre(2);
+plot(tPlot, trajStorePre(keepPre,:)', "Color", [0.82 0.82 0.82], "LineWidth", 0.8);
+
+% plot last gen (post-conv)
+nPost = numel(idxPost);
+endValsPost = zeros(nPost, 1);
+trajStorePost = zeros(nPost, numel(tPlot));
+% nLast = numel(idxLast);
+% endValsLast = zeros(nLast, 1);
+% trajStoreLast = zeros(nLast, numel(tPlot));
+
+for k = 1:nPost
+    % theta = lastGenParticles(idxLast(k), :).';
+    % model.setParams(theta);
+    % [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+    % 
+    % trajNorm = traj(1,:) ./ traj(1,1);
+    % endValsLast(k) = trajNorm(end);
+    % trajStoreLast(k,:) = trajNorm;
+
+    theta = postGenParticles(idxPost(k), :).';
+    model.setParams(theta);
+    [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+
+    trajNorm = traj(1,:) ./ traj(1,1);
+    endValsPost(k) = trajNorm(end);
+    trajStorePost(k,:) = trajNorm;
+end
+
+% qLast = quantile(endValsLast, [0.25 0.75]);
+% keepLast = endValsLast >= qLast(1) & endValsLast <= qLast(2);
+% plot(tPlot, trajStoreLast(keepLast,:)', "Color", [0.10 0.35 0.80], "LineWidth", 0.8);
+% 
+% model.setParams(theta_post);
+% [fitTraj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+% fitNorm = fitTraj(1,:) ./ fitTraj(1,1);
+% plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
+
+qPost = quantile(endValsPost, [0.25 0.75]);
+keepPost = endValsPost >= qPost(1) & endValsPost <= qPost(2);
+plot(tPlot, trajStorePost(keepPost,:)', "Color", [0.10 0.35 0.80], "LineWidth", 0.8);
+
+% % Mean posterior fit from the final joint sampler
+% summary = sampler.PosteriorSummary();
+% theta_post = summary(:,1);
+% 
+% model.setParams(theta_post);
+% [fitTraj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+% fitNorm = fitTraj(1,:) ./ fitTraj(1,1);
+% plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
+
+fitNorm = median(trajStorePost, 1);
+plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
+xlim([0, 360]);
+
+xlabel("Crosslink time [min]")
+ylabel("Normalized Cross-sectional Area")
+title("First and last generation particle trajectories for 27C")
+box on
+legend({"IQR of First Gen", "IQR of Last Gen", "Median Post-Gen Trajectory"}, "Location", "best")
+
 
 %% Save all figures
 resultsDir = fullfile(pwd, "SMC_results_" + string(timestamp));
@@ -252,6 +392,7 @@ figNames = {
     "full_beta_mu_histogram.svg"
     "full_beta_sigma_histogram.svg"
     "mean_posterior_prediction.svg"
+    "particle_generation_comparison_27C.svg"
     };
 
 figs = findall(groot, "Type", "figure");
