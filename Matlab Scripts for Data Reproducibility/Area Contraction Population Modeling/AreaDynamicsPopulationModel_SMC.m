@@ -176,7 +176,8 @@ sampler.PlotConvergence();
 summary = sampler.PosteriorSummary();
 
 %%
-sampler.PlotPosteriorHistograms();
+% sampler.PlotPosteriorHistograms();
+sampler.PlotKDEstimate()
 % sampler.PlotJointPosterior();
 
 %% Mean Posterior Prediction

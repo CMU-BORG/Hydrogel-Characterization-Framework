@@ -54,12 +54,12 @@ figure; hold all
 for i=60*[0,2,4,6]
     inds = find(data_27(:,2)==i);
     data_i = data_27(inds,3);
-    errorbar(data_27(inds,2),median(data_i), -std(data_i), std(data_i),'sr',"LineWidth",4)
+    errorbar(data_27(inds,2),mean(data_i), std(data_i), std(data_i),'sr',"LineWidth",4)
     % errorbar(data_27(inds,2),median(data_i), quantile(data_i,[0.025]) - median(data_i), quantile(data_i,[0.975]) - median(data_i),'k',"LineWidth",2,"CapSize",0)
     
-    % inds = find(data_37(:,2)==i);
-    % data_i = data_37(inds,3);
-    % errorbar(data_37(inds,2),median(data_i), -std(data_i), std(data_i),'sb',"LineWidth",4)
+    inds = find(data_37(:,2)==i);
+    data_i = data_37(inds,3);
+    errorbar(data_37(inds,2),mean(data_i), std(data_i), std(data_i),'sb',"LineWidth",4)
     % errorbar(data_37(inds,2),median(data_i), quantile(data_i,[0.25]) - median(data_i), quantile(data_i,[0.75]) - median(data_i),'sb',"LineWidth",2)
     
 end
@@ -69,10 +69,10 @@ mu_E0_mean = 100; % [kPa] (around typical values for hydrogel)
 mu_E0_std = 50;  % [kpa] (broad prior)
 mu_E0_prior = makedist("Normal","mu",mu_E0_mean, "sigma",mu_E0_std);
 
-
-mu_dE_mean = 0; % [g] assume no change in mass
-mu_dE_std = 100;  % [g] 
-mu_dE_prior = makedist("Normal","mu",mu_dE_mean, "sigma",mu_dE_std);
+% we know the stiffness increases with cross-linking but we are uninformed
+% about the magnitude
+mu_dE_std = 200;  % [g] 
+mu_dE_prior = makedist("HalfNormal", "sigma",mu_dE_std);
 
 % sig_E_lower = 1;      % [g] lowest possible value of sigma  
 % sig_E_upper = 100;    % [g] highest possible values of sigma
@@ -113,6 +113,7 @@ parameter_labels = {"\mu_{E_0}","\mu_{\Delta E}",...
                     "\beta_\mu","\beta_\sigma"};
 
 
+<<<<<<< Updated upstream
 %% Step 1: Estimate the initial distribution using standard SMC
 gammas_ = (linspace(0,1,5)');
 
@@ -126,6 +127,22 @@ E0_prior.GeneratePosterior();
 E0_prior.PlotConvergence();
 
 summary = E0_prior.PosteriorSummary();
+=======
+%% Step 1: Estimate the initial mass distribution using standard SMC
+% gammas_ = (linspace(0,1,5)');
+% 
+% transforms = cell(1,1);
+% transforms{1} = {2, LogTransform()};
+% 
+% % Getting an M0 distribution using all of the M0 data
+% model_norm_prior = GaussianModel(0);
+% E0_prior = SMC_Sampler(2000,model_norm_prior,priors([1,3]),2.38,data(data(:,1)==-1,3),gammas_,{"\mu_{E_0}","\sigma_{E_0}"},{},transforms,1);
+% E0_prior.GeneratePosterior();
+% E0_prior.PlotConvergence();
+% 
+% summary = E0_prior.PosteriorSummary();
+
+>>>>>>> Stashed changes
 
 %% Step 2: Estimating the Population model for 27C and 37C separately
 %{
@@ -137,58 +154,85 @@ summary = E0_prior.PosteriorSummary();
 
 stiff_pop_model_one_temp = Stiffness_PopulationModel(0);
 
-N_gens = 5;
-n_ = 1;
-N_sims = 10;
-gammas_mu = [linspace(1,0.15^(1/n_),N_gens).^n_]';
-% gamma_min = 0.1;
-% gammas = (1-gamma_min)*(3*gammas.^2 - 2*gammas.^3) + gamma_min;
-gammas = zeros(N_gens,1,2);
-for i=1:2
-    gammas(:,1,i) = 100*(0.5 + 0.5*(i==2))*gammas_mu; %3*gammas_mu.^2 - 2*gammas_mu.^3;
-end
+N_gens = 10;
+gammas_ = linspace(0,1,N_gens)';
 
 % 27 C data
-time_vals = unique(data(:,2));
-data_cell = cell(length(time_vals),1);
-for i=1:length(time_vals)
-    data_i = data_27(data_27(:,2)==time_vals(i),:);
-    data_cell{i} = {length(data_i), [time_vals(i),0], data_i(:,3)};
-end
 
 % constructing priors and mappings
-priors_ = {E0_prior, priors{[2,4,5,6,7]} };
-mappings_ = {1,[1,3];   
-             2,[2];
-             3,[4];
-             4,[5];
-             5,[6];
-             6,[7]};
+priors_ = priors(1:7); 
+mappings_ = {};
 transforms = {{3,LogTransform()}; {4,LogTransform()}; {5,LogitTransform(-1,1)}; {6, LogTransform()}; {7, LogTransform()}};
 
-data_27_prior = ABC_SMC_Sampler(2000, 15, stiff_pop_model_one_temp, priors_, 2.38, data_cell, gammas,parameter_labels(1:7), mappings_, transforms, 1);
-data_27_prior.S_sims = N_sims;
+data_27_prior = SMC_Sampler(2000, stiff_pop_model_one_temp, priors_,2,data_27,gammas_,parameter_labels(1:7), mappings_, transforms,1);
+
 data_27_prior.GeneratePosterior();
 data_27_prior.PlotConvergence();
 
 fprintf("\t~~~~ 27 C Data ~~~~\n")
-data_27_prior.PosteriorSummary();
+summary = data_27_prior.PosteriorSummary();
 
-% 37 C data
-time_vals = unique(data(:,2));
-data_cell = cell(length(time_vals),1);
-for i=1:length(time_vals)
-    data_i = data_37(data_37(:,2)==time_vals(i),:);
-    data_cell{i} = {length(data_i), [time_vals(i), 0], data_i(:,3)};
+%% Posterior Predictive Check 27C Data
+theta_post = summary(:,1);
+
+stiff_pop_model_one_temp.setParams(theta_post);
+
+t = 0:15:360;
+N_traj = 100000;
+
+figure("Position",[100,100,600,400],"Color","w"); hold all
+
+[trajectories,particles] = stiff_pop_model_one_temp.rnd_trajectories(t,N_traj,0);
+
+plot(data_27(:,2),data_27(:,3),'ok')
+t_groups = unique(data_27(:,2));
+N_samps_per_group = 6;
+for i=1:length(t_groups)
+    inds = data_27(:,2)==t_groups(i);
+    data_ = data_27(inds,3);
+    errorbar(t_groups(i),mean(data_), std(data_), std(data_),'sg',"LineWidth",2)
 end
 
-data_37_prior = ABC_SMC_Sampler(2000, 15, stiff_pop_model_one_temp, priors_, 2.38, data_cell, gammas,parameter_labels(1:7), mappings_, transforms, 1);
-data_37_prior.S_sims = N_sims;
+mean_27 = mean(trajectories,1);
+std_27 = std(trajectories,[],1);
+errorbar(t,mean_27,std_27,std_27,'vertical','Marker','s','MarkerFaceColor','r','Color','r')
+
+
+%% 37 C data
+
+data_37_prior = SMC_Sampler(2000, stiff_pop_model_one_temp, priors_,2,data_37,gammas_,parameter_labels(1:7), mappings_, transforms,1);
 data_37_prior.GeneratePosterior();
 data_37_prior.PlotConvergence();
 
 fprintf("\t~~~~ 37 C Data ~~~~\n")
-data_37_prior.PosteriorSummary();
+summary = data_37_prior.PosteriorSummary();
+
+%% Posterior Predictive Check 37C Data
+theta_post = summary(:,1);
+
+stiff_pop_model_one_temp.setParams(theta_post);
+
+t = 0:15:360;
+N_traj = 100000;
+
+figure("Position",[100,100,600,400],"Color","w"); hold all
+
+[trajectories,particles] = stiff_pop_model_one_temp.rnd_trajectories(t,N_traj,0);
+
+plot(data_37(:,2),data_37(:,3),'ok')
+t_groups = unique(data_37(:,2));
+N_samps_per_group = 6;
+mean_data = zeros(length(t_groups),1);
+for i=1:length(t_groups)
+    inds = data_37(:,2)==t_groups(i);
+    data_ = data_37(inds,3);
+    mean_data(i) = mean(data_);
+    errorbar(t_groups(i),mean(data_), std(data_), std(data_),'sg',"LineWidth",2)
+end
+
+mean_37 = mean(trajectories,1);
+std_37 = std(trajectories,[],1);
+errorbar(t,mean_37,std_37,std_37,'vertical','Marker','s','MarkerFaceColor','b','Color','b')
 
 %%
 % estimating alpha and beta using the estimated dA values at each temperature
@@ -221,29 +265,33 @@ transforms = {{3, LogTransform()};
               {11, LogitTransform(-1,effect_max)};};
 
 % all data
-data(data(:,1)==-1,1) = 0;
-
-temp_vals = unique(data(:,1));
-data_cell = cell(7,1);
-for j=1:length(temp_vals)
-    data_ = data(data(:,1)==temp_vals(j),:);
-    time_vals = unique(data_(:,2));
-
-    for i=1:length(time_vals)
-        data_i = data_(data_(:,2)==time_vals(i),:);
-        data_cell{(j-1)*4 + i} = {length(data_i), [time_vals(i),temp_vals(j)], data_i(:,3)};
-    end
-end
-
-N_sims = 5;
-gammas_mu = linspace(0.2,0.1,N_gens)';
-gammas = zeros(N_gens,1,2);
-for i=1:2
-    gammas(:,1,i) = 100*(0.5 + 0.5*(i==2))*gammas_mu;
-end
+% data(data(:,1)==-1,1) = 0;
+% 
+% temp_vals = unique(data(:,1));
+% data_cell = cell(7,1);
+% for j=1:length(temp_vals)
+%     data_ = data(data(:,1)==temp_vals(j),:);
+%     time_vals = unique(data_(:,2));
+% 
+%     for i=1:length(time_vals)
+%         data_i = data_(data_(:,2)==time_vals(i),:);
+%         data_cell{(j-1)*4 + i} = {length(data_i), [time_vals(i),temp_vals(j)], data_i(:,3)};
+%     end
+% end
+% 
+% N_sims = 5;
+% gammas_mu = linspace(0.3,0.1,N_gens)';
+% gammas = zeros(N_gens,1,5);
+% var_ind = [5];
+% for i=1:5
+%     gammas(:,1,i) = gammas_mu*(0.5 + 0.5*(any(i==var_ind)));
+% end
+gammas_ = linspace(0.5,1,10)';
 
 %%
-sampler = ABC_SMC_Sampler(4000,15,stiffness_model,priors_final,2.38,data_cell,gammas,parameter_labels,mappings,transforms,0);
+% sampler = ABC_SMC_Sampler(4000,N_sims,stiffness_model,priors_final,2.38,data,gammas,parameter_labels,mappings,transforms,0);
+sampler = SMC_Sampler(2000, stiffness_model, priors_final,1.5,data,gammas_,parameter_labels, mappings, transforms,0);
+
 sampler.GeneratePosterior();
 
 summary = sampler.PosteriorSummary();
@@ -255,14 +303,14 @@ sampler.PlotPosteriorHistograms();
 %% Mean Posterior Prediction
 theta_post = summary(:,1);
 
-model.setParams(theta_post);
+stiffness_model.setParams(theta_post);
 
 t = 0:15:360;
 N_traj = 100000;
 
 figure("Position",[100,100,600,400],"Color","w"); hold all
 
-[trajectories,particles] = model.rnd_trajectories(t,N_traj,0);
+[trajectories,particles] = stiffness_model.rnd_trajectories(t,N_traj,0);
 mean_27 = mean(trajectories,1);
 std_27 = std(trajectories,[],1);
 % for i=1:N_traj
@@ -270,7 +318,7 @@ std_27 = std(trajectories,[],1);
 % end
 errorbar(t,mean_27,std_27,std_27,'vertical','Marker','s','MarkerFaceColor','r','Color','r')
 
-[trajectories,particles] = model.rnd_trajectories(t,N_traj,1);
+[trajectories,particles] = stiffness_model.rnd_trajectories(t,N_traj,1);
 mean_37 = mean(trajectories,1);
 std_37 = std(trajectories,[],1);
 % for i=1:N_traj

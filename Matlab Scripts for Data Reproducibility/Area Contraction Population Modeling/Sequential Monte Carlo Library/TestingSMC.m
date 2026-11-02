@@ -13,7 +13,7 @@ end
 timestamp = datestr(now, 'yyyymmdd_HHMM');
 
 %% Testing Using Bernoulli Model and Conjugate Prior
-bernoulli_model = BernoulliModel();
+bernoulli_model = BernoulliModel(0);
 
 
 N_data = 20;    % number of datapoints to use in the dataset
@@ -30,7 +30,7 @@ posterior = makedist("Beta","a",a_prior+sum(X_data_true),"b",b_prior+N_data-sum(
 gammas = min(linspace(0,1.,10),1)';   % gamma values to use for the SMC algorithm
 transforms = {{1, LogitTransform(0,1)};};
 
-sampler = SMC_Sampler(2000,bernoulli_model,priors,2.38,X_data_true,gammas,["p"],{},transforms);
+sampler = SMC_Sampler(500,bernoulli_model,priors,2.38,X_data_true,gammas,["p"],{},transforms);
 sampler.GeneratePosterior();
 
 figs = sampler.PlotConvergence();
@@ -210,31 +210,8 @@ contour(A,B,post_,15)
 % using the same model data from previous gamma model so we can use the
 % same numerically calculated posterior to comparison
 
-metrics = [prod(X_data), sum(X_data,1)];
-X_data_cell = {{N_data, [], metrics};};
-
-% Used to estimating where to start the error bounds
-% model.setParams([priors(1).random(1),priors(2).random(1)]);
-% prior_data = model.rnd(N_data);
-% prior_metrics = [mean(prior_data), std(prior_data)];
-% prior_error = abs(prior_metrics - metrics)./metrics;
-
-
-% for i=1:1000
-%     gamma_model.setParams([priors(1).random(1),priors(2).random(1)]);
-%     gamma_model.approx_likelihood(X_data_cell,4)
-% 
-% end
-
-N_gens = 10;
-n_ = 3;
-gammas_mu = linspace(1,0.025^(1/n_),N_gens).^n_;
-gammas_sig = gammas_mu; % linspace(4,0.01,N_gens);
-gammas = zeros(N_gens,1,2);
-gammas(:,1,1) = gammas_mu;
-gammas(:,1,2) = gammas_sig;
-
-sampler = ABC_SMC_Sampler(2000,5,gamma_model,priors,2.38,X_data_cell,gammas,["\alpha","\beta"],{},transforms);
+gamma_model_approx = GammaModel(0,1);
+sampler = SMC_Sampler(1000,gamma_model_approx,priors,2.38,X_data,gammas,["\alpha","\beta"],{},transforms);
 sampler.GeneratePosterior();
 
 
@@ -260,6 +237,7 @@ xline(alpha_data,'--g','LineWidth',2);
 plot(0.05*x_,priors{1}.pdf(0.05*x_),'--','Color','r','LineWidth',2)
 plot(alpha_test,f_alpha,'--b','LineWidth',2)
 
+
 figure(fig_post{2}); hold all
 xline(beta_true,'--k','LineWidth',2);
 xline(beta_data,'--g','LineWidth',2);
@@ -270,12 +248,6 @@ for i=1:2
     figure(fig_post{i}); hold all
     histogram(priors{i}.random(1000,1),'Normalization','pdf')
 end
-
-% 
-% %%
-% sampler.PlotJointPosterior();
-% nexttile(3); hold all
-% contour(A,B,post_,15)
 
 
 %% Testing the Gaussian Model and Prior Mapping for Joint Priors

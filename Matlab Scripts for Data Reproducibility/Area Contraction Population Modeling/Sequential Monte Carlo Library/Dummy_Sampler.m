@@ -78,6 +78,26 @@ classdef Dummy_Sampler < handle
             end
             p_ = exp( sum(log_pdf_,2) );
         end
+
+        function theta_ = SamplePrior(obj, N_samps)
+            % samples parameters from the provided priors
+            theta_ = zeros(N_samps,obj.P_parameters);
+            if isempty(obj.maps)
+                for i=1:obj.P_parameters
+                    theta_(:,i) = obj.priors{i}.random([N_samps,1]);
+                end
+            else
+                for i=1:size(obj.maps,1)
+                    prior_ind = obj.maps{i,1};
+                    prior_samps = obj.priors{prior_ind}.random([N_samps,1]);
+                    particle_inds = obj.maps{i,2};
+                    for j=1:length(particle_inds)
+                        theta_(:,particle_inds(j)) = prior_samps(:,j);
+                    end
+                end
+            end
+
+        end
         
         function inds = SystematicResample(obj,weights,M)
             %{
@@ -141,6 +161,16 @@ classdef Dummy_Sampler < handle
                 p_ = p_ .* is_range;
             end
         end
+
+        function p_ = marginal_pdf(obj, particles, index)
+            %{
+                Estimates the marginal pdf of parameter at position index 
+                using the posterior particles and kernel density
+                estimation.
+            %}
+            p_ = ksdensity(obj.posterior(:,index),particles,'Bandwidth',obj.bw(index));
+            
+        end
         
         % ~~~~~ functions for analyzing the posterior and convergence ~~~~~
         function summary = PosteriorSummary(obj)
@@ -182,6 +212,40 @@ classdef Dummy_Sampler < handle
             end
 
         end
+
+        function fig = PlotKDEstimate(obj)
+            
+            if ~obj.calibrated
+                error("Posterior must be calibrated before you can plot the convergence")
+            end
+            
+            % for each of the parameters, plot the histograms of particles
+            figs = cell(obj.P_parameters,1);
+            for i=1:obj.P_parameters
+                fi = figure("Position",[100,100,600,300],'Color','w'); hold all
+                range = [min(obj.posterior(:,i)), max(obj.posterior(:,i))];
+                x_ = linspace(range(1) - 0.1*diff(range), range(2) + 0.1*diff(range), 300);
+                y_ = obj.marginal_pdf(x_, i);
+
+                F_ = cumtrapz(x_,y_); % approximate CDF
+                iF_ = @(p) fminsearch(@(x) (p - interp1(x_(1:end), F_, x)).^2, mean(x_));
+                p_0_025 = iF_(0.025);
+                p_0_50 = iF_(0.5);
+                p_0_975 = iF_(0.975);
+
+                fill([x_,x_(1)],[y_,y_(1)],'b','FaceAlpha',0.4,'EdgeColor','none');
+                errorbar(p_0_50,1.1*max(y_), p_0_025-p_0_50,p_0_975-p_0_50,'horizontal','sk','MarkerFaceColor','k','capsize',0,'linewidth',1)
+                plot(x_,y_,'-','Color',[0.2,0.4,0.9],'LineWidth',1.5);
+                xlabel(obj.parameter_labels(i));
+                ylabel("\pi("+obj.parameter_labels(i)+")")
+                set(gca,"FontName","calibri","FontSize",12);
+                ylim([0,1.15*max(y_)])
+                figs{i} = fi;
+
+            end
+
+        end
+
 
         function fig = PlotJointPosterior(obj)
             fig = figure("Position",[100,100,850,850],'Color','w');

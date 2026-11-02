@@ -10,13 +10,13 @@ classdef BernoulliModel < handle
 
     properties
         p       % probability of a 1
-
-
+        use_approx_likelihood       % flag set to determine if true or approx likelihood should be used
     end
 
     methods
-        function obj = BernoulliModel()
+        function obj = BernoulliModel(use_approx_likelihood)
             obj.p = 0.5; % initializing
+            obj.use_approx_likelihood = use_approx_likelihood;
         end
 
         function setParams(obj,theta)
@@ -25,11 +25,17 @@ classdef BernoulliModel < handle
         end
 
         function logL = log_likelihood(obj,X)
-            % log likelihood of the dataset X
-            N1 = sum(X);    % number of datapoints equal to 1
-            N0 = length(X) - N1;    % number of datapoints equal to 0
-            
-            logL = N1*log(obj.p) + N0*log(1-obj.p);
+
+            if ~obj.use_approx_likelihood
+                % log likelihood of the dataset X
+                N1 = sum(X);    % number of datapoints equal to 1
+                N0 = length(X) - N1;    % number of datapoints equal to 0
+                
+                logL = N1*log(obj.p) + N0*log(1-obj.p);
+            else
+                % approximate likelihood 
+                
+            end
         end
 
         function X = rnd(obj,N)

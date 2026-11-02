@@ -12,13 +12,19 @@ classdef GammaModel < handle
         alpha       % shape param
         beta        % scale param
         mean_sig_parameterized % set to 1 if you want to parameterize the Gamma model by the mean and standard deviation instead of a and b
+        use_approx_likelihood       % flag set to determine if true or approx likelihood should be used
     end
 
     methods
-        function obj = GammaModel(MS_param)
+        function obj = GammaModel(MS_param,use_approx_likelihood)
+            arguments
+                MS_param 
+                use_approx_likelihood = 0;
+            end
             obj.alpha = 1; % initializing
             obj.beta = 1;
             obj.mean_sig_parameterized = MS_param;
+            obj.use_approx_likelihood = use_approx_likelihood;
         end
 
         function setParams(obj,theta)
@@ -34,9 +40,32 @@ classdef GammaModel < handle
         end
 
         function logL = log_likelihood(obj,X)
-            % log likelihood of the dataset X
-            log_p = log(gampdf(X,obj.alpha,obj.beta));
-            logL = sum(log_p);
+            if ~obj.use_approx_likelihood
+                % log likelihood of the dataset X
+                log_p = log(gampdf(X,obj.alpha,obj.beta));
+                logL = sum(log_p);
+            else
+                % approximate likelihood 
+
+                M_samples = 100;
+                
+                % sample a number of sample datasets and calculate their
+                % summary statistics
+                sample_points = obj.rnd(M_samples * length(X)) + 1e-12; 
+                sample_points = reshape(sample_points,[length(X),M_samples]);
+                s_sim = [exp(mean(log(sample_points),1)); mean(sample_points,1)];
+
+                % calculate the mean and covariance of the simulated
+                % summary statistics (fitting a multivariate normal to the
+                % simulated summary statistics
+                mu_sim = mean(s_sim,2);
+                Sig_sim = cov(s_sim');
+                
+                % calculate the data summary statistics and calculate its
+                % probability in the multivariate normal
+                s_data = [exp(mean(log(X))); mean(X)];
+                logL = log(mvnpdf(s_data,mu_sim,Sig_sim));
+            end
         end
 
         function p = pdf(obj,X)
@@ -44,7 +73,7 @@ classdef GammaModel < handle
         end
 
         function X = rnd(obj,N)
-            % generates N random Bernoulli variables
+            % generates N random Gamma variables
             if size(N)==1
                 X = gamrnd(obj.alpha,obj.beta,N,1);
             else

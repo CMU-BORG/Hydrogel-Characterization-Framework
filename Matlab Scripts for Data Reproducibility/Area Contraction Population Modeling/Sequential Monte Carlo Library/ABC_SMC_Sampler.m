@@ -64,24 +64,10 @@ classdef ABC_SMC_Sampler < SMC_Sampler
             
             % preallocating memory for the vectors/matrices used at each
             % stage
-            cur_particles = zeros(obj.N_particles,obj.P_parameters);
             weights = ones(obj.N_particles,1) / obj.N_particles;
 
             % initializing the parameters using the priors
-            if isempty(obj.maps)
-                for i=1:obj.P_parameters
-                    cur_particles(:,i) = obj.priors{i}.random([obj.N_particles,1]);
-                end
-            else
-                for i=1:size(obj.maps,1)
-                    prior_ind = obj.maps{i,1};
-                    prior_samps = obj.priors{prior_ind}.random([obj.N_particles,1]);
-                    particle_inds = obj.maps{i,2};
-                    for j=1:length(particle_inds)
-                        cur_particles(:,particle_inds(j)) = prior_samps(:,j);
-                    end
-                end
-            end
+            cur_particles = obj.SamplePrior(obj.N_particles);
             
             % calculating the covariance of the proposal matrix
             if isempty(obj.transforms)
@@ -180,7 +166,7 @@ classdef ABC_SMC_Sampler < SMC_Sampler
                 count = count + 1;
                 if mod(count,one_percent)==0
                     % Calculate percentages and bar length
-                    bar_length = 20; % Total width of the text bar
+                    bar_length = 50; % Total width of the text bar
                     progress_ticks = round((count / obj.N_particles) * bar_length);
                     
                     % Construct the text string: e.g., "#####               ] 25%"

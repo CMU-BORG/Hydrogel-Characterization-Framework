@@ -129,7 +129,7 @@ classdef PopulationModel < matlab.mixin.Copyable
 
             % sampling parameters from a Gamma distribution
             tau_alpha = (mu_tau_X/sig_tau_X)^2; tau_beta = sig_tau_X^2 / mu_tau_X;
-            tau_vec = gamrnd(tau_alpha,tau_beta,N,1);
+            tau_vec = gamrnd(tau_alpha + 1e-6,tau_beta + 1e-6,N,1);
             
             params = [P_vec, tau_vec];
         end
@@ -148,7 +148,7 @@ classdef PopulationModel < matlab.mixin.Copyable
             params = obj.rnd_params(N,X);
 
             % generate the trajectories
-            P_t = (params(:,1) + params(:,2)) - params(:,2).*exp(-t ./ params(:,3));
+            P_t = (params(:,1) + params(:,2)) - params(:,2).*exp(-t ./ (params(:,3)+1e-12));
         end
 
 
