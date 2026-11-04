@@ -30,7 +30,7 @@ posterior = makedist("Beta","a",a_prior+sum(X_data_true),"b",b_prior+N_data-sum(
 gammas = min(linspace(0,1.,10),1)';   % gamma values to use for the SMC algorithm
 transforms = {{1, LogitTransform(0,1)};};
 
-sampler = SMC_Sampler(500,bernoulli_model,priors,2.38,X_data_true,gammas,["p"],{},transforms);
+sampler = SMC_Sampler(1000,bernoulli_model,priors,2.38,X_data_true,gammas,["p"],{},transforms);
 sampler.GeneratePosterior();
 
 figs = sampler.PlotConvergence();
@@ -39,7 +39,7 @@ yline(p_true,'--k','LineWidth',2)
 yline(posterior.mean(),'-b','LineWidth',2)
 yline(posterior.icdf([0.025,0.975]),':b','LineWidth',2)
 
-
+% Comparing to the known PDFs
 fig_post = sampler.PlotPosteriorHistograms();
 x_ = linspace(0,1,300);
 figure(fig_post{1}); hold all
@@ -48,6 +48,15 @@ plot(x_,posterior.pdf(x_),'-','Color','b','LineWidth',2);
 plot(x_,sampler.pdf(x_'),':g','LineWidth',2)
 histogram(sampler.random(5000),'FaceAlpha',0.2,'Normalization','pdf')
 drawnow()
+
+%%
+% Comparing to the kernel density estimates of the PDFs
+fig_post_KDE = figure('Position',[100,100,400,200],'Color','w');
+fig_post_KDE = sampler.PlotPrior(fig_post_KDE,1);
+fig_post_KDE = sampler.PlotKDEstimate(fig_post_KDE,1);
+
+
+
 
 %% Testing the ABC SMC method using the Bernoulli Model
 
@@ -156,29 +165,32 @@ transforms{2} = {2,LogTransform()};
 sampler = SMC_Sampler(1000,gamma_model,priors,2.38,X_data,gammas,["\alpha","\beta"],{},transforms);
 sampler.GeneratePosterior();
 
-f_post = sampler.pdf([A(:),B(:)]);
-f_post = reshape(f_post,size(A));
-fa_post = trapz(beta_test,f_post,1);
-fb_post = trapz(alpha_test,f_post,2);
+%%
 
+% f_post = sampler.pdf([A(:),B(:)]);
+% f_post = reshape(f_post,size(A));
+% fa_post = trapz(beta_test,f_post,1);
+% fb_post = trapz(alpha_test,f_post,2);
+fa_post = sampler.marginal_pdf(1,alpha_test');
+fb_post = sampler.marginal_pdf(2,beta_test');
 
 mu_data = mean(X_data);
 sig_data = std(X_data);
 alpha_data = (mu_data/sig_data)^2;
 beta_data = sig_data^2 / mu_data;
 
-figs = sampler.PlotConvergence();
-figure(figs{1}); hold all
-yline(alpha_true,'--k','LineWidth',2)
-yline(alpha_data,'--g','LineWidth',2);
-yline(alpha_med,'--b','LineWidth',2);
-yline(alpha_CI,':b','LineWidth',2)
-
-figure(figs{2}); hold all
-yline(beta_true,'--k','LineWidth',2)
-yline(beta_data,'--g','LineWidth',2);
-yline(beta_med,'--b','LineWidth',2);
-yline(beta_CI,':b','LineWidth',2)
+% figs = sampler.PlotConvergence();
+% figure(figs{1}); hold all
+% yline(alpha_true,'--k','LineWidth',2)
+% yline(alpha_data,'--g','LineWidth',2);
+% yline(alpha_med,'--b','LineWidth',2);
+% yline(alpha_CI,':b','LineWidth',2)
+% 
+% figure(figs{2}); hold all
+% yline(beta_true,'--k','LineWidth',2)
+% yline(beta_data,'--g','LineWidth',2);
+% yline(beta_med,'--b','LineWidth',2);
+% yline(beta_CI,':b','LineWidth',2)
 
 post_resamps = sampler.random(5000);
 
@@ -201,9 +213,18 @@ plot(beta_test,fb_post,':g','LineWidth',2)
 histogram(post_resamps(:,2),'FaceAlpha',0.2,'Normalization','pdf')
 
 
-sampler.PlotJointPosterior();
-nexttile(3); hold all
-contour(A,B,post_,15)
+% sampler.PlotJointPosterior();
+% nexttile(3); hold all
+% contour(A,B,post_,15)
+
+%% % Comparing to the kernel density estimates of the PDFs
+fig_post_KDE = figure('Position',[100,100,400,200],'Color','w');
+fig_post_KDE = sampler.PlotPrior(fig_post_KDE,1);
+fig_post_KDE = sampler.PlotKDEstimate(fig_post_KDE,1);
+
+fig_post_KDE = figure('Position',[100,350,400,200],'Color','w');
+fig_post_KDE = sampler.PlotPrior(fig_post_KDE,2);
+fig_post_KDE = sampler.PlotKDEstimate(fig_post_KDE,2);
 
 
 %% Testing ABC SMC method using the Gamma Model

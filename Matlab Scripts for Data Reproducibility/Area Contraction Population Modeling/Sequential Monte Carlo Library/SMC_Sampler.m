@@ -31,9 +31,6 @@ classdef SMC_Sampler < Dummy_Sampler
         model           % statistical model for which you are estimating the parameters
         proposals       % vector of proposal widths, updated based on particle variance
         
-        transforms      % transformer classes that allows for bounded variables to be transformed to the full real number line.
-                        % It also calculates the necessary corrections to the prior probability in the MH step
-
         data            % dataset used to estimate your parameters; each row is assumed to be an independent sample from your population model
 
         
@@ -69,15 +66,13 @@ classdef SMC_Sampler < Dummy_Sampler
             % running super initial function; sets N_particles,
             % P_parameters, maps, priors, report_priors
             posterior_ = zeros(N,P_parameters);
-            obj@Dummy_Sampler(posterior_,parameter_labels,maps,priors,report_prior)
+            obj@Dummy_Sampler(posterior_,parameter_labels,maps,transforms,priors,report_prior)
            
             % additional parameters
             obj.gammas = gammas;
             obj.M_generations = length(gammas);
 
             obj.model = model;
-            obj.transforms = transforms;
-
             obj.data = data;
             
             obj.proposals = diag(ones(obj.P_parameters,1));
@@ -185,10 +180,9 @@ classdef SMC_Sampler < Dummy_Sampler
             cur_particles = cur_particles(particle_index,:);
             obj.posterior = cur_particles; % same the last set of particles as the posterior  
 
-            bw_scale = (4 / ((obj.P_parameters + 2)*obj.N_particles) )^( 1/(obj.P_parameters + 4) );
-            for i=1:obj.P_parameters
-                obj.bw(i) = std(obj.posterior(:,i))*bw_scale;
-            end
+            % calculating the bandwidth of the kernel density estimate of
+            % the posterior
+            obj.bw = obj.CalculateBandwidth();
             
             obj.calibrated = true;
         end
