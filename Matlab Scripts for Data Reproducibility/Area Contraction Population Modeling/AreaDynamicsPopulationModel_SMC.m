@@ -350,60 +350,60 @@ legend({"IQR of First Gen", "IQR of Last Gen", "Median Post-Gen Trajectory"}, "L
 
 
 %% Save all figures
-resultsDir = fullfile(pwd, "SMC_results_" + string(timestamp));
-if ~exist(resultsDir, "dir")
-    mkdir(resultsDir);
-end
-
-figNames = {
-    "A0_mu_convergence.svg"
-    "A0_sigma_convergence.svg"
-    "dA27_mu_convergence.svg"
-    "dA27_sigma_convergence.svg"
-    "dA37_mu_convergence.svg"
-    "dA37_sigma_convergence.svg"
-    "alpha_mu_histogram.svg"
-    "alpha_sigma_histogram.svg"
-    "tau27_mu_convergence.svg"
-    "tau27_sigma_convergence.svg"
-    "tau37_mu_convergence.svg"
-    "tau37_sigma_convergence.svg"
-    "beta_mu_histogram.svg"
-    "beta_sigma_histogram.svg"
-    "full_mu_A0_convergence.svg"
-    "full_mu_dA_convergence.svg"
-    "full_sigma_A0_convergence.svg"
-    "full_sigma_dA_convergence.svg"
-    "full_rho_convergence.svg"
-    "full_mu_tau_convergence.svg"
-    "full_sigma_tau_convergence.svg"
-    "full_alpha_mu_convergence.svg"
-    "full_alpha_sigma_convergence.svg"
-    "full_beta_mu_convergence.svg"
-    "full_beta_sigma_convergence.svg"
-    "full_mu_A0_histogram.svg"
-    "full_mu_dA_histogram.svg"
-    "full_sigma_A0_histogram.svg"
-    "full_sigma_dA_histogram.svg"
-    "full_rho_histogram.svg"
-    "full_mu_tau_histogram.svg"
-    "full_sigma_tau_histogram.svg"
-    "full_alpha_mu_histogram.svg"
-    "full_alpha_sigma_histogram.svg"
-    "full_beta_mu_histogram.svg"
-    "full_beta_sigma_histogram.svg"
-    "mean_posterior_prediction.svg"
-    "particle_generation_comparison_27C.svg"
-    };
-
-figs = findall(groot, "Type", "figure");
-[~, idx] = sort(arrayfun(@(f) f.Number, figs));
-figs = figs(idx);
-
-if numel(figs) ~= numel(figNames)
-    error("Found %d figures, but expected %d.", numel(figs), numel(figNames));
-end
-
-for k = 1:numel(figs)
-    exportgraphics(figs(k), fullfile(resultsDir, figNames{k}), "ContentType", "vector");
-end
+% resultsDir = fullfile(pwd, "SMC_results_" + string(timestamp));
+% if ~exist(resultsDir, "dir")
+%     mkdir(resultsDir);
+% end
+% 
+% figNames = {
+%     "A0_mu_convergence.svg"
+%     "A0_sigma_convergence.svg"
+%     "dA27_mu_convergence.svg"
+%     "dA27_sigma_convergence.svg"
+%     "dA37_mu_convergence.svg"
+%     "dA37_sigma_convergence.svg"
+%     "alpha_mu_histogram.svg"
+%     "alpha_sigma_histogram.svg"
+%     "tau27_mu_convergence.svg"
+%     "tau27_sigma_convergence.svg"
+%     "tau37_mu_convergence.svg"
+%     "tau37_sigma_convergence.svg"
+%     "beta_mu_histogram.svg"
+%     "beta_sigma_histogram.svg"
+%     "full_mu_A0_convergence.svg"
+%     "full_mu_dA_convergence.svg"
+%     "full_sigma_A0_convergence.svg"
+%     "full_sigma_dA_convergence.svg"
+%     "full_rho_convergence.svg"
+%     "full_mu_tau_convergence.svg"
+%     "full_sigma_tau_convergence.svg"
+%     "full_alpha_mu_convergence.svg"
+%     "full_alpha_sigma_convergence.svg"
+%     "full_beta_mu_convergence.svg"
+%     "full_beta_sigma_convergence.svg"
+%     "full_mu_A0_histogram.svg"
+%     "full_mu_dA_histogram.svg"
+%     "full_sigma_A0_histogram.svg"
+%     "full_sigma_dA_histogram.svg"
+%     "full_rho_histogram.svg"
+%     "full_mu_tau_histogram.svg"
+%     "full_sigma_tau_histogram.svg"
+%     "full_alpha_mu_histogram.svg"
+%     "full_alpha_sigma_histogram.svg"
+%     "full_beta_mu_histogram.svg"
+%     "full_beta_sigma_histogram.svg"
+%     "mean_posterior_prediction.svg"
+%     "particle_generation_comparison_27C.svg"
+%     };
+% 
+% figs = findall(groot, "Type", "figure");
+% [~, idx] = sort(arrayfun(@(f) f.Number, figs));
+% figs = figs(idx);
+% 
+% if numel(figs) ~= numel(figNames)
+%     error("Found %d figures, but expected %d.", numel(figs), numel(figNames));
+% end
+% 
+% for k = 1:numel(figs)
+%     exportgraphics(figs(k), fullfile(resultsDir, figNames{k}), "ContentType", "vector");
+% end
