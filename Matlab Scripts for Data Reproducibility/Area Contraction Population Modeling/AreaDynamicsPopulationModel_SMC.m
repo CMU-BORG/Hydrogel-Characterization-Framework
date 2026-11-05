@@ -17,12 +17,16 @@ end
 
 timestamp = datestr(now, 'yyyymmdd_HHMM');
 
+output_fig_folder = "Area Results\";
+
+% setting for reproducibility
+rng(1000000); 
+
 %% Loading the fitted parameter data
 
 % data from the fitting of the exponential curves to the dynamical data.
 % Used to estimate the population model parameters
 data = load("AreaModelParameters.mat","params").params;
-% data = data(data(:,1)==10,:);    % currently testing with just 27C data
 
 %% Setting up the sampler and the parameters for the calibration
 
@@ -88,74 +92,27 @@ priors = {mu_A0_prior,mu_dA_prior,...
           mean_tau_prior, sig_tau_prior,...
           effect_prior,effect_prior,effect_prior,effect_prior};
 
-%% Step 1: Converge a starting proposal for the Normal parameters
-gammas_ = linspace(0,1,10)';
-
-% Getting an A0 distribution using all of the A0 data
-model_norm_prior = GaussianModel(0);
-A0_prior = SMC_Sampler(2000,model_norm_prior,priors([1,3]),2.38,data(:,2),gammas_,{"\mu_{A_0}","\sigma_{A_0}"},{},{{2,LogTransform()}},1);
-A0_prior.GeneratePosterior();
-A0_prior.PlotConvergence();
-
-% Getting a dA distribution using the 27 C data
-dA_27_prior = SMC_Sampler(2000,model_norm_prior,priors([2,3]),2.38,data(data(:,1)==0,3),gammas_,{"\mu_{\Delta A_{27}}","\sigma_{\Delta A_{27}}"},{},{{2,LogTransform()}},1);
-dA_27_prior.GeneratePosterior();
-dA_27_prior.PlotConvergence();
-
-% Getting a dA*(1+alpha) distribution using 37 C data 
-dA_37_prior = SMC_Sampler(2000,model_norm_prior,priors([2,3]),2.38,data(data(:,1)==1,3),gammas_,{"\mu_{\Delta A_{37}}","\sigma_{\Delta A_{37}}"},{},{{2,LogTransform()}},1);
-dA_37_prior.GeneratePosterior();
-dA_37_prior.PlotConvergence();
-
-% estimating alpha using the estimated dA values at each temperature
-alpha_mu_est = dA_37_prior.posterior(:,1) ./ dA_27_prior.posterior(:,1) - 1;
-alpha_sig_est = dA_37_prior.posterior(:,2) ./ dA_27_prior.posterior(:,2) - 1;
-alpha_posterior = [alpha_mu_est, alpha_sig_est];
-alpha_prior = Dummy_Sampler(alpha_posterior,{"\alpha_\mu","\alpha_\sigma"},{},priors([8,9]),1);
-alpha_prior.PlotPosteriorHistograms();
-
-
-%% Step 2: Converge a starting proposal for the Gamma parameters
-
-% Getting a tau distribution using the 27 C data
-model_gamma_prior = GammaModel(1);
-
-% estimating tau parameters for 27 C data
-tau_27_prior = SMC_Sampler(2000,model_gamma_prior,priors([6,7]),2.38,data(data(:,1)==0,4),gammas_,{"\alpha_{\mu_{27}}","\alpha_{\sigma_{27}}"},{},{{1,LogTransform()},{2,LogTransform()}},1);
-tau_27_prior.GeneratePosterior();
-tau_27_prior.PlotConvergence();
-
-% estimating tau parameters for 37 C data
-tau_37_prior = SMC_Sampler(2000,model_gamma_prior,priors([6,7]),2.38,data(data(:,1)==1,4),gammas_,{"\alpha_{\mu_{37}}","\alpha_{\sigma_{37}}"},{},{{1,LogTransform()},{2,LogTransform()}},1);
-tau_37_prior.GeneratePosterior();
-tau_37_prior.PlotConvergence();
-
-% estimating beta using the estimate tau at each temperature
-beta_mu_est = tau_37_prior.posterior(:,1) ./ tau_27_prior.posterior(:,1) - 1;
-beta_sig_est = tau_37_prior.posterior(:,2) ./ tau_27_prior.posterior(:,2) - 1;
-beta_posterior = [beta_mu_est, beta_sig_est];
-beta_prior = Dummy_Sampler(beta_posterior,{"\beta_\mu","\beta_\sigma"},{},priors([10,11]),1);
-
-beta_prior.PlotPosteriorHistograms();
-
-
-%% Step 3: Construct the sampler using the pre-convergence proposal distributions to get full joint posterior
-gammas_ = linspace(0.75,1,5)'; % because we already have a good starting place, we don't have to start all the way at the prior again, but can start most of the way to the posterior
+%% Fitting the Posterior Parameter Distribution
+gammas_ = linspace(0.0,1,15)'; % because we already have a good starting place, we don't have to start all the way at the prior again, but can start most of the way to the posterior
 
 parameter_labels = {"\mu_{A_0}","\mu_{\Delta A}",...
                     "\sigma_{A_0}","\sigma_{\Delta A}","\rho",...
                     "\mu_\tau","\sigma_\tau",...
                     "\alpha_\mu","\alpha_\sigma",...
                     "\beta_\mu","\beta_\sigma"};
+text_names = {"mu_A0","mu_DA",...
+            "sigma_A0","sigma_dA","rho",...
+            "mu_tau","sigma_tau",...
+            "alpha_mu","alpha_sigma",...
+            "beta_mu","beta_sigma"};
 
-model = PopulationModel(1); % ~~~~ NEED TO CHANGE TO 1 ONCE THE 37C DATA IS INCLUDED ~~~~~
-mappings = {1,[1,3]; % A0 sampler 
-            2,[2,4]; % dA_27 sampler
-            3,[5];   % rho prior
-            4,[6,7]; % tau 27 sampler
-            5,[8,9]; % alpha sampler
-            6,[10,11]}; % beta sampler
-priors = {A0_prior, dA_27_prior, rho_A_prior, tau_27_prior, alpha_prior, beta_prior};
+model = PopulationModel(1);
+
+priors = {mu_A0_prior,mu_dA_prior,...
+          sig_A_prior, sig_A_prior, rho_A_prior,...
+          mean_tau_prior, sig_tau_prior,...
+          effect_prior,effect_prior,effect_prior,effect_prior};
+mappings = {};
 
 transforms = {{3, LogTransform()};
               {4, LogTransform()};
@@ -171,173 +128,268 @@ sampler = SMC_Sampler(5000,model,priors,2.38,data,gammas_,parameter_labels,mappi
 sampler.GeneratePosterior();
 
 sampler.PlotConvergence();
-
-%%
 summary = sampler.PosteriorSummary();
 
-%%
-% sampler.PlotPosteriorHistograms();
-sampler.PlotKDEstimate()
-% sampler.PlotJointPosterior();
+%% Comparison of the prior and the posterior
 
-%% Mean Posterior Prediction
+for i=1:length(priors)
+    fig = figure('position',[100,100,400,200],'color','w');hold all
+    ax = gca;
+    ax.PositionConstraint = 'innerposition'; % Keeps the inner plot area fixed
+
+    fig = sampler.PlotPrior(fig,i);
+    fig = sampler.PlotKDEstimate(fig,i);
+    if i>length(priors)-4
+        xline(0,'--k','LineWidth',2)
+    end
+    set(gca,'FontName','Calibri','FontSize',18)
+    ylabel("")
+    xlabel("")
+    saveas(gcf, output_fig_folder + text_names{i} + ".svg", "svg");
+end
+
+%% Median Posterior Simulations
 theta_post = summary(:,1);
-
 model.setParams(theta_post);
 
 t = 0:15:360;
 N_traj = 100000;
 
-figure("Position",[100,100,600,400],"Color","w"); hold all
-
 [trajectories,particles] = model.rnd_trajectories(t,N_traj,0);
 mean_27 = mean(trajectories,1);
 std_27 = std(trajectories,[],1);
-% for i=1:N_traj
-%     plot(t,trajectories(i,:),"Color",[1,0.5,0.5]*rand(1),"LineWidth",0.1)
-% end
-errorbar(t,mean_27,std_27,std_27,'vertical','Marker','s','MarkerFaceColor','r','Color','r')
+lower_CI_27 = quantile(trajectories,0.025,1);
+upper_CI_27 = quantile(trajectories,0.975,1);
 
 [trajectories,particles] = model.rnd_trajectories(t,N_traj,1);
 mean_37 = mean(trajectories,1);
 std_37 = std(trajectories,[],1);
-% for i=1:N_traj
-%     plot(t,trajectories(i,:),"Color",[1,0.5,0.5]*rand(1),"LineWidth",0.1)
+lower_CI_37 = quantile(trajectories,0.025,1);
+upper_CI_37 = quantile(trajectories,0.975,1);
+
+%% Posterior Predictive Check
+
+color_27 = [0.3,0.8,0.4];
+color_37 = [0.8,0.3,0.8];
+
+% 27C Data
+ind_27 = find((data(:,1)==0)|(data(:,1)==-1));
+f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
+fill([t,flip(t)],[upper_CI_27,flip(lower_CI_27)],color_27,'EdgeColor','none','FaceAlpha',0.2);
+fill([t,flip(t)],[mean_27-std_27,flip(mean_27 + std_27)],color_27,'EdgeColor','none','FaceAlpha',0.5);
+for i=1:length(ind_27)
+    theta = data(ind_27(i),2:end);
+    y_ = (theta(1) + theta(2)) - theta(2)*exp(-t/theta(3));
+    plot(t,y_,'--k','LineWidth',0.1)
+end
+plot(t,mean_27,'-','color',0.6*color_27,'LineWidth',3)
+xlabel("Time [min]")
+ylabel("Cross-sectional Area [mm^2]")
+ylim([100,270])
+set(gca,'FontName','Calibri','FontSize',14)
+saveas(gcf, output_fig_folder + "GroupPPC_27C.svg", "svg");
+
+
+
+% 37C Data
+ind_37 = find((data(:,1)==1)|(data(:,1)==-1));
+f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
+fill([t,flip(t)],[upper_CI_37,flip(lower_CI_37)],color_37,'EdgeColor','none','FaceAlpha',0.2);
+fill([t,flip(t)],[mean_37-std_37,flip(mean_37 + std_37)],color_37,'EdgeColor','none','FaceAlpha',0.5);
+for i=1:length(ind_37)
+    theta = data(ind_37(i),2:end);
+    y_ = (theta(1) + theta(2)) - theta(2)*exp(-t/theta(3));
+    plot(t,y_,'--k','LineWidth',0.1)
+end
+plot(t,mean_37,'-','color',0.6*color_37,'LineWidth',3)
+xlabel("Time [min]")
+ylabel("Cross-sectional Area [mm^2]")
+ylim([100,270])
+set(gca,'FontName','Calibri','FontSize',14)
+saveas(gcf, output_fig_folder + "GroupPPC_37C.svg", "svg");
+
+
+% Comparison of the groups
+f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
+fill([t,flip(t)],[mean_27-std_27,flip(mean_27 + std_27)],color_27,'EdgeColor','none','FaceAlpha',0.5);
+plot(t,mean_27,'-','color',0.6*color_27,'LineWidth',3)
+fill([t,flip(t)],[mean_37-std_37,flip(mean_37 + std_37)],color_37,'EdgeColor','none','FaceAlpha',0.5);
+plot(t,mean_37,'-','color',0.6*color_37,'LineWidth',3)
+xlabel("Time [min]")
+ylabel("Cross-sectional Area [mm^2]")
+ylim([125,250])
+set(gca,'FontName','Calibri','FontSize',14)
+saveas(gcf, output_fig_folder + "GroupComparison.svg", "svg");
+
+
+%% Joint Posteriors
+
+% A, dA:
+fig1 = figure("Position",[100,100,750,600],'Color','w');
+sampler.PlotJointPosterior(fig1,[1,2,3,4,5])
+saveas(fig1, output_fig_folder + "A_dA_JointPrior.svg", "svg");
+
+% dA, effects:
+fig2 = figure("Position",[100,100,750,600]*0.8,'Color','w');
+sampler.PlotJointPosterior(fig2,[2,4,8,9])
+saveas(fig2, output_fig_folder + "dA_Effects_JointPrior.svg", "svg");
+
+% tau, effects:
+fig3 = figure("Position",[100,100,750,600]*0.8,'Color','w');
+sampler.PlotJointPosterior(fig3,[6,7,10,11])
+saveas(fig3, output_fig_folder + "tau_Effects_JointPrior.svg", "svg");
+
+
+
+
+
+
+
+
+
+% %% Compare first and last generation particle trajectories for one temperature
+% 
+% tempCondition = 0;  % 0 = 27C, 1 = 37C
+% dataTemp = data(data(:,1) == tempCondition, :);
+% tPlot = linspace(0, 360, 200);
+% nShow = 100;
+% rng(1);  % reproducible selection
+% 
+% % particleHistory = sampler.particle_history;
+% % 
+% % firstGenParticles = squeeze(particleHistory(1, :, :));   % 5000 x 11
+% % lastGenParticles  = squeeze(particleHistory(end, :, :)); % 5000 x 11
+% 
+% % Build a synthetic pre-convergence ensemble from stage-1/2 posterior samples
+% nPrePool = size(A0_prior.posterior, 1);
+% preGenParticles = zeros(nPrePool, 11);
+% 
+% for k = 1:nPrePool
+%     iA = randi(size(A0_prior.posterior, 1));
+%     iD = randi(size(dA_27_prior.posterior, 1));
+%     iT = randi(size(tau_27_prior.posterior, 1));
+%     iAlpha = randi(size(alpha_prior.posterior, 1));
+%     iBeta = randi(size(beta_prior.posterior, 1));
+% 
+%     preGenParticles(k,:) = [
+%         A0_prior.posterior(iA,1), ...
+%         dA_27_prior.posterior(iD,1), ...
+%         A0_prior.posterior(iA,2), ...
+%         dA_27_prior.posterior(iD,2), ...
+%         random(rho_A_prior), ...
+%         tau_27_prior.posterior(iT,1), ...
+%         tau_27_prior.posterior(iT,2), ...
+%         alpha_prior.posterior(iAlpha,1), ...
+%         alpha_prior.posterior(iAlpha,2), ...
+%         beta_prior.posterior(iBeta,1), ...
+%         beta_prior.posterior(iBeta,2)];
 % end
-errorbar(t,mean_37,std_37,std_37,'vertical','Marker','s','MarkerFaceColor','b','Color','b')
-
-
-%% Compare first and last generation particle trajectories for one temperature
-
-tempCondition = 0;  % 0 = 27C, 1 = 37C
-dataTemp = data(data(:,1) == tempCondition, :);
-tPlot = linspace(0, 360, 200);
-nShow = 100;
-rng(1);  % reproducible selection
-
-% particleHistory = sampler.particle_history;
 % 
-% firstGenParticles = squeeze(particleHistory(1, :, :));   % 5000 x 11
-% lastGenParticles  = squeeze(particleHistory(end, :, :)); % 5000 x 11
-
-% Build a synthetic pre-convergence ensemble from stage-1/2 posterior samples
-nPrePool = size(A0_prior.posterior, 1);
-preGenParticles = zeros(nPrePool, 11);
-
-for k = 1:nPrePool
-    iA = randi(size(A0_prior.posterior, 1));
-    iD = randi(size(dA_27_prior.posterior, 1));
-    iT = randi(size(tau_27_prior.posterior, 1));
-    iAlpha = randi(size(alpha_prior.posterior, 1));
-    iBeta = randi(size(beta_prior.posterior, 1));
-
-    preGenParticles(k,:) = [
-        A0_prior.posterior(iA,1), ...
-        dA_27_prior.posterior(iD,1), ...
-        A0_prior.posterior(iA,2), ...
-        dA_27_prior.posterior(iD,2), ...
-        random(rho_A_prior), ...
-        tau_27_prior.posterior(iT,1), ...
-        tau_27_prior.posterior(iT,2), ...
-        alpha_prior.posterior(iAlpha,1), ...
-        alpha_prior.posterior(iAlpha,2), ...
-        beta_prior.posterior(iBeta,1), ...
-        beta_prior.posterior(iBeta,2)];
-end
-
-% Final post-convergence generation from the joint sampler
-postGenParticles = squeeze(sampler.particle_history(end, :, :));
-
-idxPre = randperm(size(preGenParticles, 1), min(nShow, size(preGenParticles, 1)));
-idxPost = randperm(size(postGenParticles, 1), min(nShow, size(postGenParticles, 1)));
-% idxFirst = randperm(size(firstGenParticles, 1), min(nShow, size(firstGenParticles, 1)));
-% idxLast  = randperm(size(lastGenParticles, 1),  min(nShow, size(lastGenParticles, 1)));
-
-figure("Color","w","Position",[100,100,700,450]); hold on
-
-% plot first gen (pre-conv)
-
-% nFirst = numel(idxFirst);
-% endValsFirst = zeros(nFirst, 1);
-% trajStoreFirst = zeros(nFirst, numel(tPlot));
-nPre = numel(idxPre);
-endValsPre = zeros(nPre, 1);
-trajStorePre = zeros(nPre, numel(tPlot));
-
-for k = 1:nPre %nFirst
-    % theta = firstGenParticles(idxFirst(k), :).';
-    % model.setParams(theta);
-    % [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
-    % 
-    % trajNorm = traj(1,:) ./ traj(1,1);
-    % endValsFirst(k) = trajNorm(end);
-    % trajStoreFirst(k,:) = trajNorm;
-
-    theta = preGenParticles(idxPre(k), :).';
-    model.setParams(theta);
-    [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
-
-    trajNorm = traj(1,:) ./ traj(1,1);
-    endValsPre(k) = trajNorm(end);
-    trajStorePre(k,:) = trajNorm;
-end
-
-% qFirst = quantile(endValsFirst, [0.25 0.75]);
-% keepFirst = endValsFirst >= qFirst(1) & endValsFirst <= qFirst(2);
-% plot(tPlot, trajStoreFirst(keepFirst,:)', "Color", [0.82 0.82 0.82], "LineWidth", 0.8);
-
-qPre = quantile(endValsPre, [0.25 0.75]);
-keepPre = endValsPre >= qPre(1) & endValsPre <= qPre(2);
-plot(tPlot, trajStorePre(keepPre,:)', "Color", [0.82 0.82 0.82], "LineWidth", 0.8);
-
-% plot last gen (post-conv)
-nPost = numel(idxPost);
-endValsPost = zeros(nPost, 1);
-trajStorePost = zeros(nPost, numel(tPlot));
-% nLast = numel(idxLast);
-% endValsLast = zeros(nLast, 1);
-% trajStoreLast = zeros(nLast, numel(tPlot));
-
-for k = 1:nPost
-    % theta = lastGenParticles(idxLast(k), :).';
-    % model.setParams(theta);
-    % [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
-    % 
-    % trajNorm = traj(1,:) ./ traj(1,1);
-    % endValsLast(k) = trajNorm(end);
-    % trajStoreLast(k,:) = trajNorm;
-
-    theta = postGenParticles(idxPost(k), :).';
-    model.setParams(theta);
-    [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
-
-    trajNorm = traj(1,:) ./ traj(1,1);
-    endValsPost(k) = trajNorm(end);
-    trajStorePost(k,:) = trajNorm;
-end
-
-% qLast = quantile(endValsLast, [0.25 0.75]);
-% keepLast = endValsLast >= qLast(1) & endValsLast <= qLast(2);
-% plot(tPlot, trajStoreLast(keepLast,:)', "Color", [0.10 0.35 0.80], "LineWidth", 0.8);
+% % Final post-convergence generation from the joint sampler
+% postGenParticles = squeeze(sampler.particle_history(end, :, :));
 % 
-% model.setParams(theta_post);
-% [fitTraj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
-% fitNorm = fitTraj(1,:) ./ fitTraj(1,1);
+% idxPre = randperm(size(preGenParticles, 1), min(nShow, size(preGenParticles, 1)));
+% idxPost = randperm(size(postGenParticles, 1), min(nShow, size(postGenParticles, 1)));
+% % idxFirst = randperm(size(firstGenParticles, 1), min(nShow, size(firstGenParticles, 1)));
+% % idxLast  = randperm(size(lastGenParticles, 1),  min(nShow, size(lastGenParticles, 1)));
+% 
+% figure("Color","w","Position",[100,100,700,450]); hold on
+% 
+% % plot first gen (pre-conv)
+% 
+% % nFirst = numel(idxFirst);
+% % endValsFirst = zeros(nFirst, 1);
+% % trajStoreFirst = zeros(nFirst, numel(tPlot));
+% nPre = numel(idxPre);
+% endValsPre = zeros(nPre, 1);
+% trajStorePre = zeros(nPre, numel(tPlot));
+% 
+% for k = 1:nPre %nFirst
+%     % theta = firstGenParticles(idxFirst(k), :).';
+%     % model.setParams(theta);
+%     % [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+%     % 
+%     % trajNorm = traj(1,:) ./ traj(1,1);
+%     % endValsFirst(k) = trajNorm(end);
+%     % trajStoreFirst(k,:) = trajNorm;
+% 
+%     theta = preGenParticles(idxPre(k), :).';
+%     model.setParams(theta);
+%     [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+% 
+%     trajNorm = traj(1,:) ./ traj(1,1);
+%     endValsPre(k) = trajNorm(end);
+%     trajStorePre(k,:) = trajNorm;
+% end
+% 
+% % qFirst = quantile(endValsFirst, [0.25 0.75]);
+% % keepFirst = endValsFirst >= qFirst(1) & endValsFirst <= qFirst(2);
+% % plot(tPlot, trajStoreFirst(keepFirst,:)', "Color", [0.82 0.82 0.82], "LineWidth", 0.8);
+% 
+% qPre = quantile(endValsPre, [0.25 0.75]);
+% keepPre = endValsPre >= qPre(1) & endValsPre <= qPre(2);
+% plot(tPlot, trajStorePre(keepPre,:)', "Color", [0.82 0.82 0.82], "LineWidth", 0.8);
+% 
+% % plot last gen (post-conv)
+% nPost = numel(idxPost);
+% endValsPost = zeros(nPost, 1);
+% trajStorePost = zeros(nPost, numel(tPlot));
+% % nLast = numel(idxLast);
+% % endValsLast = zeros(nLast, 1);
+% % trajStoreLast = zeros(nLast, numel(tPlot));
+% 
+% for k = 1:nPost
+%     % theta = lastGenParticles(idxLast(k), :).';
+%     % model.setParams(theta);
+%     % [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+%     % 
+%     % trajNorm = traj(1,:) ./ traj(1,1);
+%     % endValsLast(k) = trajNorm(end);
+%     % trajStoreLast(k,:) = trajNorm;
+% 
+%     theta = postGenParticles(idxPost(k), :).';
+%     model.setParams(theta);
+%     [traj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+% 
+%     trajNorm = traj(1,:) ./ traj(1,1);
+%     endValsPost(k) = trajNorm(end);
+%     trajStorePost(k,:) = trajNorm;
+% end
+% 
+% % qLast = quantile(endValsLast, [0.25 0.75]);
+% % keepLast = endValsLast >= qLast(1) & endValsLast <= qLast(2);
+% % plot(tPlot, trajStoreLast(keepLast,:)', "Color", [0.10 0.35 0.80], "LineWidth", 0.8);
+% % 
+% % model.setParams(theta_post);
+% % [fitTraj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+% % fitNorm = fitTraj(1,:) ./ fitTraj(1,1);
+% % plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
+% 
+% qPost = quantile(endValsPost, [0.25 0.75]);
+% keepPost = endValsPost >= qPost(1) & endValsPost <= qPost(2);
+% plot(tPlot, trajStorePost(keepPost,:)', "Color", [0.10 0.35 0.80], "LineWidth", 0.8);
+% 
+% % % Mean posterior fit from the final joint sampler
+% % summary = sampler.PosteriorSummary();
+% % theta_post = summary(:,1);
+% % 
+% % model.setParams(theta_post);
+% % [fitTraj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
+% % fitNorm = fitTraj(1,:) ./ fitTraj(1,1);
+% % plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
+% 
+% fitNorm = median(trajStorePost, 1);
 % plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
-
-qPost = quantile(endValsPost, [0.25 0.75]);
-keepPost = endValsPost >= qPost(1) & endValsPost <= qPost(2);
-plot(tPlot, trajStorePost(keepPost,:)', "Color", [0.10 0.35 0.80], "LineWidth", 0.8);
-
-% % Mean posterior fit from the final joint sampler
-% summary = sampler.PosteriorSummary();
-% theta_post = summary(:,1);
+% xlim([0, 360]);
 % 
-% model.setParams(theta_post);
-% [fitTraj, ~] = model.rnd_trajectories(tPlot, 1, tempCondition);
-% fitNorm = fitTraj(1,:) ./ fitTraj(1,1);
-% plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
+% xlabel("Crosslink time [min]")
+% ylabel("Normalized Cross-sectional Area")
+% title("First and last generation particle trajectories for 27C")
+% box on
+% legend({"IQR of First Gen", "IQR of Last Gen", "Median Post-Gen Trajectory"}, "Location", "best")
+% 
 
+<<<<<<< HEAD
 fitNorm = median(trajStorePost, 1);
 plot(tPlot, fitNorm, "k-", "LineWidth", 2.5);
 xlim([0, 360]);
@@ -350,6 +402,9 @@ legend({"IQR of First Gen", "IQR of Last Gen", "Median Post-Gen Trajectory"}, "L
 
 
 %% Save all figures
+=======
+% %% Save all figures
+>>>>>>> 25510d34ab6b921e87c690f4f9b0faf63f14ca84
 % resultsDir = fullfile(pwd, "SMC_results_" + string(timestamp));
 % if ~exist(resultsDir, "dir")
 %     mkdir(resultsDir);
