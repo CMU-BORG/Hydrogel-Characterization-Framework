@@ -123,6 +123,9 @@ classdef SMC_Sampler < Dummy_Sampler
                 weights = weights .* weights_updates;   % updating particles;  
                 weights = weights / sum(weights);       % normalizing weights
                 t1 = toc;
+                if any(isnan(weights))
+                    disp("Some fuckery!!")
+                end 
 
                 % calculating the effective sample size (ESS) based on the
                 % new weights
@@ -322,9 +325,7 @@ classdef SMC_Sampler < Dummy_Sampler
         end
 
         
-
-        
-        %%%%%% Fixed Helper Functions Used By SMC_Sampler and ABC_SMC_Sampler %%%%%%
+        %%%%%% Fixed Helper Functions Used By SMC_Sampler %%%%%%
         function weighted_cov = CalculateWeightedCovariance(obj,weights,particles)
             % calculates the weighted emperical covariance of the particles
             % using the weights in weights
@@ -348,7 +349,7 @@ classdef SMC_Sampler < Dummy_Sampler
             figs = cell(obj.P_parameters,1);
 
             for i=1:obj.P_parameters
-                fi = figure("Position",[100,100,600,300],'Color','w'); hold all
+                fi = figure("Position",[100,100,400,200],'Color','w'); hold all
                 
                 for k=1:obj.M_generations
                     weights_p = obj.weight_history(k,:);

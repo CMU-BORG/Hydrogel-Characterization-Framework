@@ -239,24 +239,25 @@ classdef Dummy_Sampler < handle
 
             bw_i = obj.CalculateBandwidth(sample_points,indices);
 
-            log_jacobian = 0;
+            jacobian = 1;
             if ~isempty(obj.transforms)
                 for j=1:length(obj.transforms)
                     ind = obj.transforms{j}{1};
                     ind_in_vec = find(indices==ind);
                     if ~isempty(ind_in_vec)
-                        log_jacobian = log_jacobian + log(obj.transforms{j}{2}.jacobian(particles(:,ind_in_vec)));
+                        jacobian = jacobian .* obj.transforms{j}{2}.jacobian(particles(:,ind_in_vec));
                         particles(:,ind_in_vec) = obj.transforms{j}{2}.transform(particles(:,ind_in_vec));
                         sample_points(:,ind_in_vec) = obj.transforms{j}{2}.transform(sample_points(:,ind_in_vec));
                     end
                 end
             end
-            p_ = log(ksdensity(sample_points,particles,'Bandwidth',bw_i)) + log_jacobian;
-            p_ = exp(p_);
+            p_ = ksdensity(sample_points,particles,'Bandwidth',bw_i);
+            p_(p_ < (1e-3)*max(p_)) = 0; % getting rid of incredibly low probability points near boundaries that are artificially inflated by the jacobian
+            p_ = p_ .* jacobian;
         end
         
         % ~~~~~ functions for analyzing the posterior and convergence ~~~~~
-        function summary = PosteriorSummary(obj)
+        function [summary,lines] = PosteriorSummary(obj)
             %{
                 Creates a struct with the summary metrics for your
                 posterior
@@ -266,11 +267,16 @@ classdef Dummy_Sampler < handle
             end
             
             summary = zeros(obj.P_parameters,3);
-            fprintf("~~~~ Posterior Summary (median [95%% CI]) ~~~~\n")
+            lines = [];
+            li = sprintf("~~~~ Posterior Summary (median [95%% CI]) ~~~~");
+            disp(li);
+            lines = [lines, li];
             for p=1:obj.P_parameters
                 summary(p,1) = median(obj.posterior(:,p));
                 summary(p,2:3) = quantile(obj.posterior(:,p),[0.025,0.975]);
-                fprintf("\t%s: %.3f [ %.3f,%.3f ] \n",obj.parameter_labels{p},summary(p,1),summary(p,2),summary(p,3))
+                li = sprintf("\t%s: %.3f [ %.3f,%.3f ]",obj.parameter_labels{p},summary(p,1),summary(p,2),summary(p,3));
+                disp(li);
+                lines = [lines, li];
             end
 
         end
@@ -302,7 +308,7 @@ classdef Dummy_Sampler < handle
                 fig 
                 index  
                 sample_points = obj.posterior;
-                color = [0.2,0.4,0.9];
+                color = 0.9*[1,0.2,1];
                 show_95CI = 1;
             end
             
@@ -346,9 +352,11 @@ classdef Dummy_Sampler < handle
             plot(x_,y_,'-','Color',0.8*color,'LineWidth',1.5);
 
             if show_95CI
+                options = optimoptions('fsolve', 'Display', 'none');
+
                 % calculating the 95% credible interval around the median
                 F_ = cumtrapz(x_,y_); % approximate CDF
-                iF_ = @(p) fminsearch(@(x) (p - interp1(x_(1:end), F_, x)).^2, mean(x_));
+                iF_ = @(p) fsolve(@(x) (p - interp1(x_, F_, x)), mean(x_), options);
                 p_0_025 = iF_(0.025);
                 p_0_50 = iF_(0.5);
                 p_0_975 = iF_(0.975);
@@ -359,7 +367,7 @@ classdef Dummy_Sampler < handle
             xlabel(obj.parameter_labels(index));
             ylabel("\pi("+obj.parameter_labels(index)+")")
             set(gca,"FontName","calibri","FontSize",14);
-            ylim([0,1.15*max(y_)])
+            % ylim([0,1.15*max(y_)])
     
 
         end
@@ -384,12 +392,12 @@ classdef Dummy_Sampler < handle
                 obj 
                 fig 
                 index 
-                color = [0.8,0.1,0.3]; 
+                color = [0.5,1,0.7]; 
             end
             
             prior_ = obj.priors{index};
 
-            x_ = linspace(prior_.icdf(0.01), prior_.icdf(0.99),300)';
+            x_ = linspace(prior_.icdf(0.001), prior_.icdf(0.999),300)';
             y_ = prior_.pdf(x_);
 
             if fig.Type=="figure"
@@ -405,7 +413,7 @@ classdef Dummy_Sampler < handle
             xlabel(obj.parameter_labels(index));
             ylabel("\pi("+obj.parameter_labels(index)+")")
             set(gca,"FontName","calibri","FontSize",14);
-            ylim([0,1.15*max(y_)])
+            % ylim([0,1.15*max(y_)])
             xlim([min(x_),max(x_)])
 
         end
@@ -419,6 +427,15 @@ classdef Dummy_Sampler < handle
             end
             figure(fig);
             tiledlayout(length(indices),length(indices),"TileSpacing","tight","Padding","compact"); 
+
+            color = 0.9*[1,0.2,1];
+            cmap = zeros(20,3);
+
+            c_ = linspace(0,1,20);
+            cmap(:,1) = 1*(1-c_) + color(1)*(c_);
+            cmap(:,2) = 0.9*(1-c_) + color(2)*(c_);
+            cmap(:,3) = 1*(1-c_) + color(3)*(c_);
+            
             
             for i=1:length(indices)
                 ind = sub2ind([length(indices),length(indices)],i,i);
@@ -427,7 +444,7 @@ classdef Dummy_Sampler < handle
                 if show_prior
                     obj.PlotPrior(axi,indices(i))
                 end
-                obj.PlotKDEstimate(axi,indices(i))
+                obj.PlotKDEstimate(axi,indices(i),obj.posterior,color,0)
                 xlim([min(obj.posterior(:,indices(i))),max(obj.posterior(:,indices(i)))])
                 ylabel("")
                 xlabel("")
@@ -441,7 +458,7 @@ classdef Dummy_Sampler < handle
                 
                 for j=i+1:length(indices)
                     ind = sub2ind([length(indices),length(indices)],i,j);
-                    axi = nexttile(ind);
+                    axi = nexttile(ind); hold all
                     
                     if show_prior
                         range_x = linspace(obj.priors{indices(i)}.icdf(0.01),obj.priors{indices(i)}.icdf(0.99),300);
@@ -453,7 +470,8 @@ classdef Dummy_Sampler < handle
                     [X,Y] = meshgrid(range_x,range_y);
                     F_ = obj.marginal_pdf([indices(i),indices(j)],[X(:),Y(:)]);
                     F_ = reshape(F_,size(X));
-                    contourf(X,Y,F_,8,'EdgeColor','none')
+                    contourf(X,Y,F_,10,'EdgeColor','none')
+                    % plot(obj.posterior(:,indices(i)),obj.posterior(:,indices(j)),'.k','MarkerSize',0.1)
                     xlim([range_x(1),range_x(end)])
                     ylim([range_y(1),range_y(end)])
                     if i==1
@@ -467,7 +485,8 @@ classdef Dummy_Sampler < handle
                         xticks([])
                     end
                     set(gca,'FontSize',12)
-                    colormap('sky')
+                    % colormap('sky')
+                    colormap(cmap)
                     drawnow()
                 end
                 

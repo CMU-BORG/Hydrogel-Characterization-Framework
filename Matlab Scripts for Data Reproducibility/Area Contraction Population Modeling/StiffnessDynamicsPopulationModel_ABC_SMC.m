@@ -1,7 +1,10 @@
 %% SMC Sampler for Stiffness Dynamics Population
 %{
+    Last Updated: MJB 11/7/2026
 
-
+    Calculates the posterior distribution of population model parameters
+    for the stiffness dynamics model using Approximate Bayesian Computation 
+    (synthetic likelihoods) Sequential Monte Carlo methods.
 %}
 
 clear all; close all; clc
@@ -9,13 +12,26 @@ clear all; close all; clc
 addpath(cd+"\Sequential Monte Carlo Library")
 addpath(cd+"\Population Models")
 
-
 % Start parallel pool if not already running
 if isempty(gcp('nocreate'))
     parpool("local", 8);  % Adjust the number of workers if needed
 end
 
-timestamp = datestr(now, 'yyyymmdd_HHMM');
+timestamp = datestr(now, 'yyyymmdd_HH00');
+
+% Parameters related to saving the figures and data
+to_save = 1;
+if to_save
+    output_fig_folder = "Stiffness Results" +string(timestamp)+ "\";
+    if isfolder(output_fig_folder)
+        % Remove the folder and all of its contents status safely
+        rmdir(output_fig_folder, 's'); 
+    end
+    mkdir(output_fig_folder)
+end
+
+% setting for reproducibility
+rng(1000000); 
 
 %% Loading the Experimental data
 
@@ -44,284 +60,219 @@ data(data(:,1)==0,1) = -1;
 data(data(:,1)>0,1) = data(data(:,1)>0,1)==37;
 data_27 = data((data(:,1)==0)|(data(:,1)==-1),:);
 data_37 = data((data(:,1)==1)|(data(:,1)==-1),:);
-%%
-figure; hold all
-% plot(0*data(:,2),data(:,3),'^k')
-% plot(data_27(:,2),data_27(:,4),'sr');
-% plot(data_37(:,2),data_37(:,4),'ob');
-% errorbar(0*data(:,2),median(data(:,3)), quantile(data(:,3),[0.25]) - median(data(:,3)), quantile(data(:,3),[0.75]) - median(data(:,3)),'sr',"LineWidth",2)
 
-for i=60*[0,2,4,6]
-    inds = find(data_27(:,2)==i);
-    data_i = data_27(inds,3);
-    errorbar(data_27(inds,2),mean(data_i), std(data_i), std(data_i),'sr',"LineWidth",4)
-    % errorbar(data_27(inds,2),median(data_i), quantile(data_i,[0.025]) - median(data_i), quantile(data_i,[0.975]) - median(data_i),'k',"LineWidth",2,"CapSize",0)
-    
-    inds = find(data_37(:,2)==i);
-    data_i = data_37(inds,3);
-    errorbar(data_37(inds,2),mean(data_i), std(data_i), std(data_i),'sb',"LineWidth",4)
-    % errorbar(data_37(inds,2),median(data_i), quantile(data_i,[0.25]) - median(data_i), quantile(data_i,[0.75]) - median(data_i),'sb',"LineWidth",2)
-    
-end
 %% Setting up the priors
 
-mu_E0_mean = 100; % [kPa] (around typical values for hydrogel)
-mu_E0_std = 50;  % [kpa] (broad prior)
-mu_E0_prior = makedist("Normal","mu",mu_E0_mean, "sigma",mu_E0_std);
+% Mean starting stiffnes [kPa]
+% centered around typical (order of magnitude) stiffness of hydrogel with
+% broad spread
+mu_E0_prior = makedist("Normal","mu",100, "sigma",50);
 
-% we know the stiffness increases with cross-linking but we are uninformed
-% about the magnitude
-mu_dE_std = 200;  % [g] 
-mu_dE_prior = makedist("HalfNormal", "sigma",mu_dE_std);
+% Mean Change in Stiffness [kPa] (assuming no average change)
+mu_dE_prior = makedist("Normal","mu",0, "sigma",50);
 
-% sig_E_lower = 1;      % [g] lowest possible value of sigma  
-% sig_E_upper = 100;    % [g] highest possible values of sigma
-% sig_E_prior = makedist("Uniform","lower",sig_E_lower,"upper",sig_E_upper);
+% Standard Deviation of the Stiffness Variables
 sig_E_prior = makedist("HalfNormal",'sigma',50);
 
-% CORRELATION COEFFICIENT PRIOR: 
+% Correlation coefficient: fully uninformative
 rho_E_prior = makedist("Uniform", "lower", -1, "upper", 1);
 
-% GAMMA PARAMETER PRIORS: The gamma distribution is parameterized by alpha
-% and beta, but it can reparameterized by the mean and standard deviation 
-% (mean = alpha*beta, variance = beta*mean). Both of these parameters have
-% to be positive, so it would make sense to put gamma distribution priors
-% on both. Alternatively you could use a uniform distribution on the either
-% or both
 
-% Prior for mean of tau (centered around 120 min)
+% Mean and Standard Deviation of Time Constant [min]
 mean_tau_prior = makedist("Gamma", "a", 3, "b", 40);  % mean = 120 min, std ≈ 69 min
 sig_tau_prior = makedist("Gamma", "a", 2, "b", 30);  % mean = 60 min, std ≈ 42 min
 
-% prior for the effect sizes. centered around no effect, guaranteed to be 
-% within -100% change for a 20C change in temperature (both to prevent 
-% negative values for variance and gamma parameters, and based on previous 
-% experimentation in the lab)
+% Prior for the effect sizes. Truncated Normal to ensure that temperature
+% doesn't change the sign of the CSA change
 effect_min = -0.9999;
 effect_max = 5;
-effect_prior = makedist("Uniform","lower",effect_min,"upper",effect_max); 
+effect_prior = truncate(makedist("Normal",0,1),effect_min,effect_max);
 
-priors = {mu_E0_prior,mu_dE_prior,...
-          sig_E_prior, sig_E_prior, rho_E_prior,...
-          mean_tau_prior, sig_tau_prior,...
-          effect_prior,effect_prior,effect_prior,effect_prior};
+%% Fitting the Posterior Parameter Distribution
 
+% geometric interpolation coefficients
+gammas_ = linspace(0.0,1,10)'; 
+
+% names of the parameters being estimated
 parameter_labels = {"\mu_{E_0}","\mu_{\Delta E}",...
                     "\sigma_{E_0}","\sigma_{\Delta E}","\rho",...
                     "\mu_\tau","\sigma_\tau",...
                     "\alpha_\mu","\alpha_\sigma",...
                     "\beta_\mu","\beta_\sigma"};
 
+% parameter names simplified for names
+text_names = {"mu_E0","mu_de",...
+            "sigma_E0","sigma_dE","rho",...
+            "mu_tau","sigma_tau",...
+            "alpha_mu","alpha_sigma",...
+            "beta_mu","beta_sigma"};
 
-<<<<<<< Updated upstream
-%% Step 1: Estimate the initial distribution using standard SMC
-gammas_ = (linspace(0,1,5)');
+% population model class specialized for the Mass measurement experiments
+model = Stiffness_PopulationModel(1);
 
-transforms = cell(1,1);
-transforms{1} = {2, LogTransform()};
+mappings = {};  % No mappings because we have independent priors
 
-% Getting an E0 distribution using all of the E0 data
-model_norm_prior = GaussianModel(0);
-E0_prior = SMC_Sampler(2000,model_norm_prior,priors([1,3]),2.38,data(data(:,1)==-1,3),gammas_,{"\mu_{E_0}","\sigma_{E_0}"},{},transforms,1);
-E0_prior.GeneratePosterior();
-E0_prior.PlotConvergence();
+priors = {mu_E0_prior,mu_dE_prior,...
+          sig_E_prior, sig_E_prior, rho_E_prior,...
+          mean_tau_prior, sig_tau_prior,...
+          effect_prior,effect_prior,effect_prior,effect_prior};
 
-summary = E0_prior.PosteriorSummary();
-=======
-%% Step 1: Estimate the initial mass distribution using standard SMC
-% gammas_ = (linspace(0,1,5)');
-% 
-% transforms = cell(1,1);
-% transforms{1} = {2, LogTransform()};
-% 
-% % Getting an M0 distribution using all of the M0 data
-% model_norm_prior = GaussianModel(0);
-% E0_prior = SMC_Sampler(2000,model_norm_prior,priors([1,3]),2.38,data(data(:,1)==-1,3),gammas_,{"\mu_{E_0}","\sigma_{E_0}"},{},transforms,1);
-% E0_prior.GeneratePosterior();
-% E0_prior.PlotConvergence();
-% 
-% summary = E0_prior.PosteriorSummary();
+% transforming parameters to bring bounded parameters to unbounded domain
+transforms = {{3, LogTransform()};                              % standard deviation of initial CSA
+              {4, LogTransform()};                              % standard deviation of change in CSA
+              {5, LogitTransform(-1,1)};                        % correlation coefficient
+              {6, LogTransform()};                              % mean time constant
+              {7, LogTransform()};                              % std time constant
+              {8, LogitTransform(effect_min,effect_max)};       % effects
+              {9, LogitTransform(effect_min,effect_max)};
+              {10, LogitTransform(effect_min,effect_max)};
+              {11, LogitTransform(effect_min,effect_max)};};
 
->>>>>>> Stashed changes
+% setting up the SMC sampler
+sampler = SMC_Sampler(5000, model, priors,2.,data,gammas_,parameter_labels, mappings, transforms,0);
 
-%% Step 2: Estimating the Population model for 27C and 37C separately
-%{
-    Don't spend too much time here. Only get down to 7.5% error on the
-    means and 15% error on the standard deviations. Then with the
-    partially-calibrated sampling distribution, do the full run on the
-    whole model and data set, pushing the error bounds more.
-%}
-
-stiff_pop_model_one_temp = Stiffness_PopulationModel(0);
-
-N_gens = 10;
-gammas_ = linspace(0,1,N_gens)';
-
-% 27 C data
-
-% constructing priors and mappings
-priors_ = priors(1:7); 
-mappings_ = {};
-transforms = {{3,LogTransform()}; {4,LogTransform()}; {5,LogitTransform(-1,1)}; {6, LogTransform()}; {7, LogTransform()}};
-
-data_27_prior = SMC_Sampler(2000, stiff_pop_model_one_temp, priors_,2,data_27,gammas_,parameter_labels(1:7), mappings_, transforms,1);
-
-data_27_prior.GeneratePosterior();
-data_27_prior.PlotConvergence();
-
-fprintf("\t~~~~ 27 C Data ~~~~\n")
-summary = data_27_prior.PosteriorSummary();
-
-%% Posterior Predictive Check 27C Data
-theta_post = summary(:,1);
-
-stiff_pop_model_one_temp.setParams(theta_post);
-
-t = 0:15:360;
-N_traj = 100000;
-
-figure("Position",[100,100,600,400],"Color","w"); hold all
-
-[trajectories,particles] = stiff_pop_model_one_temp.rnd_trajectories(t,N_traj,0);
-
-plot(data_27(:,2),data_27(:,3),'ok')
-t_groups = unique(data_27(:,2));
-N_samps_per_group = 6;
-for i=1:length(t_groups)
-    inds = data_27(:,2)==t_groups(i);
-    data_ = data_27(inds,3);
-    errorbar(t_groups(i),mean(data_), std(data_), std(data_),'sg',"LineWidth",2)
-end
-
-mean_27 = mean(trajectories,1);
-std_27 = std(trajectories,[],1);
-errorbar(t,mean_27,std_27,std_27,'vertical','Marker','s','MarkerFaceColor','r','Color','r')
-
-
-%% 37 C data
-
-data_37_prior = SMC_Sampler(2000, stiff_pop_model_one_temp, priors_,2,data_37,gammas_,parameter_labels(1:7), mappings_, transforms,1);
-data_37_prior.GeneratePosterior();
-data_37_prior.PlotConvergence();
-
-fprintf("\t~~~~ 37 C Data ~~~~\n")
-summary = data_37_prior.PosteriorSummary();
-
-%% Posterior Predictive Check 37C Data
-theta_post = summary(:,1);
-
-stiff_pop_model_one_temp.setParams(theta_post);
-
-t = 0:15:360;
-N_traj = 100000;
-
-figure("Position",[100,100,600,400],"Color","w"); hold all
-
-[trajectories,particles] = stiff_pop_model_one_temp.rnd_trajectories(t,N_traj,0);
-
-plot(data_37(:,2),data_37(:,3),'ok')
-t_groups = unique(data_37(:,2));
-N_samps_per_group = 6;
-mean_data = zeros(length(t_groups),1);
-for i=1:length(t_groups)
-    inds = data_37(:,2)==t_groups(i);
-    data_ = data_37(inds,3);
-    mean_data(i) = mean(data_);
-    errorbar(t_groups(i),mean(data_), std(data_), std(data_),'sg',"LineWidth",2)
-end
-
-mean_37 = mean(trajectories,1);
-std_37 = std(trajectories,[],1);
-errorbar(t,mean_37,std_37,std_37,'vertical','Marker','s','MarkerFaceColor','b','Color','b')
-
-%%
-% estimating alpha and beta using the estimated dA values at each temperature
-alpha_mu_est = min(max(data_37_prior.posterior(:,2) ./ data_27_prior.posterior(:,2) - 1, effect_min), 0.99999*effect_max);
-alpha_sig_est = min(max(data_37_prior.posterior(:,4) ./ data_27_prior.posterior(:,4) - 1, effect_min), 0.99999*effect_max);
-beta_mu_est = min(max(data_37_prior.posterior(:,6) ./ data_27_prior.posterior(:,6) - 1, effect_min), 0.99999*effect_max);
-beta_sig_est = min(max(data_37_prior.posterior(:,7) ./ data_27_prior.posterior(:,7) - 1, effect_min), 0.99999*effect_max);
-
-effect_posterior = [alpha_mu_est, alpha_sig_est, beta_mu_est, beta_sig_est];
-effect_prior = Dummy_Sampler(effect_posterior,{"\alpha_\mu","\alpha_\sigma","\beta_\mu","\beta_\sigma"},{},priors([8,9,10,11]),1);
-effect_prior.PlotPosteriorHistograms();
-
-%% Step 3: Estimate the full model
-
-stiffness_model = Stiffness_PopulationModel(1);
-
-mappings = {1,[1,2,3,4,5,6,7];    % initial parameter estimates
-            2,[8,9,10,11]};     % effect parameter estimates
-
-priors_final = {data_27_prior, effect_prior};
-
-transforms = {{3, LogTransform()};
-              {4, LogTransform()};
-              {5, LogitTransform(-1,1)};
-              {6, LogTransform()};
-              {7, LogTransform()};
-              {8, LogitTransform(-1,effect_max)};
-              {9, LogitTransform(-1,effect_max)};
-              {10, LogitTransform(-1,effect_max)};
-              {11, LogitTransform(-1,effect_max)};};
-
-% all data
-% data(data(:,1)==-1,1) = 0;
-% 
-% temp_vals = unique(data(:,1));
-% data_cell = cell(7,1);
-% for j=1:length(temp_vals)
-%     data_ = data(data(:,1)==temp_vals(j),:);
-%     time_vals = unique(data_(:,2));
-% 
-%     for i=1:length(time_vals)
-%         data_i = data_(data_(:,2)==time_vals(i),:);
-%         data_cell{(j-1)*4 + i} = {length(data_i), [time_vals(i),temp_vals(j)], data_i(:,3)};
-%     end
-% end
-% 
-% N_sims = 5;
-% gammas_mu = linspace(0.3,0.1,N_gens)';
-% gammas = zeros(N_gens,1,5);
-% var_ind = [5];
-% for i=1:5
-%     gammas(:,1,i) = gammas_mu*(0.5 + 0.5*(any(i==var_ind)));
-% end
-gammas_ = linspace(0.5,1,10)';
-
-%%
-% sampler = ABC_SMC_Sampler(4000,N_sims,stiffness_model,priors_final,2.38,data,gammas,parameter_labels,mappings,transforms,0);
-sampler = SMC_Sampler(2000, stiffness_model, priors_final,1.5,data,gammas_,parameter_labels, mappings, transforms,0);
-
+% generating the posterior
 sampler.GeneratePosterior();
+if to_save
+    save(output_fig_folder+"SMC_sampler_results.mat","sampler")
+end
 
-summary = sampler.PosteriorSummary();
+%% Plotting the convergence and the summary of the posterior
+figs = sampler.PlotConvergence();
+for i = 1:length(figs)
+    figure(figs{i});
+    set(gca,'FontName','Calibri','FontSize',18)
+    ylabel("")
+    xlabel("")
+    if to_save
+        saveas(gcf, output_fig_folder + text_names{i} + "_Convergence.svg", "svg");
+    end
+end
 
-sampler.PlotConvergence();
+[summary,lines] = sampler.PosteriorSummary();
+if to_save
+    writelines(lines, output_fig_folder + "PosteriorSummary.txt");
+end
 
-sampler.PlotPosteriorHistograms();
+%% Comparison of the prior and the posterior
 
-%% Mean Posterior Prediction
-theta_post = summary(:,1);
+for i=1:length(priors)
+    fig = figure('position',[100,100,400,200],'color','w');hold all
+    ax = gca;
+    ax.PositionConstraint = 'innerposition'; % Keeps the inner plot area fixed
 
-stiffness_model.setParams(theta_post);
+    fig = sampler.PlotPrior(fig,i);         % plot the prior
+    fig = sampler.PlotKDEstimate(fig,i);    % plot the kernel density estimate of the posterior
 
-t = 0:15:360;
-N_traj = 100000;
+    % for the effects, add a verticle line at 0
+    if i>length(priors)-4
+        xline(0,'--k','LineWidth',2)
+    end
 
-figure("Position",[100,100,600,400],"Color","w"); hold all
+    set(gca,'FontName','Calibri','FontSize',18)
+    ylabel("")
+    xlabel("")
+    if to_save
+        saveas(gcf, output_fig_folder + text_names{i} + ".svg", "svg");
+    end
+end
 
-[trajectories,particles] = stiffness_model.rnd_trajectories(t,N_traj,0);
-mean_27 = mean(trajectories,1);
-std_27 = std(trajectories,[],1);
-% for i=1:N_traj
-%     plot(t,trajectories(i,:),"Color",[1,0.5,0.5]*rand(1),"LineWidth",0.1)
-% end
-errorbar(t,mean_27,std_27,std_27,'vertical','Marker','s','MarkerFaceColor','r','Color','r')
+%% Median Posterior Simulations
+theta_post = summary(:,1);      % getting the posterior median particle
+model.setParams(theta_post);    % setting the model class to have the posterior median parameters
 
-[trajectories,particles] = stiffness_model.rnd_trajectories(t,N_traj,1);
+t = 0:5:360;       % time points at which to calculate the predicted trajectories
+N_traj = 100000;    % number of trajectories to sample
+
+% trajectories for the 27C samples
+[trajectories,~] = model.rnd_trajectories(t,N_traj,0);
+mean_27 = mean(trajectories,1);                 % mean
+std_27 = std(trajectories,[],1);                % standard deviation
+lower_CI_27 = quantile(trajectories,0.025,1);   % upper and lower bounds of the 95% credible interval
+upper_CI_27 = quantile(trajectories,0.975,1);
+
+% trajectories for the 37C samples
+[trajectories,particles] = model.rnd_trajectories(t,N_traj,1);
 mean_37 = mean(trajectories,1);
 std_37 = std(trajectories,[],1);
-% for i=1:N_traj
-%     plot(t,trajectories(i,:),"Color",[1,0.5,0.5]*rand(1),"LineWidth",0.1)
-% end
-errorbar(t,mean_37,std_37,std_37,'vertical','Marker','s','MarkerFaceColor','b','Color','b')
+lower_CI_37 = quantile(trajectories,0.025,1);
+upper_CI_37 = quantile(trajectories,0.975,1);
+
+%% Posterior Predictive Check
+
+color_27 = [0,192,244]/255;
+color_37 = [235,72,0]/255; 
+
+% 27C Data
+ind_27 = find((data(:,1)==0)|(data(:,1)==-1));
+f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
+fill([t,flip(t)],[upper_CI_27,flip(lower_CI_27)],color_27,'EdgeColor','none','FaceAlpha',0.2);
+fill([t,flip(t)],[mean_27-std_27,flip(mean_27 + std_27)],color_27,'EdgeColor','none','FaceAlpha',0.5);
+
+plot(data(ind_27,2),data(ind_27,3),'ok','LineWidth',1)
+
+plot(t,mean_27,'-','color',0.6*color_27,'LineWidth',3)
+xlabel("Time [min]")
+ylabel("Effective Elastic Modulus [kPa]")
+ylim([30,415])
+set(gca,'FontName','Calibri','FontSize',14)
+set(gca,'FontName','Calibri','FontSize',14)
+if to_save
+    saveas(gcf, output_fig_folder + "GroupPPC_27C.svg", "svg");
+end
+
+
+% 37C Data
+ind_37 = find((data(:,1)==1)|(data(:,1)==-1));
+f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
+fill([t,flip(t)],[upper_CI_37,flip(lower_CI_37)],color_37,'EdgeColor','none','FaceAlpha',0.2);
+fill([t,flip(t)],[mean_37-std_37,flip(mean_37 + std_37)],color_37,'EdgeColor','none','FaceAlpha',0.5);
+
+plot(data(ind_37,2),data(ind_37,3),'ok','LineWidth',1)
+
+plot(t,mean_37,'-','color',0.6*color_37,'LineWidth',3)
+xlabel("Time [min]")
+ylabel("Effective Elastic Modulus [kPa]")
+ylim([30,415])
+set(gca,'FontName','Calibri','FontSize',14)
+set(gca,'FontName','Calibri','FontSize',14)
+if to_save
+    saveas(gcf, output_fig_folder + "GroupPPC_37C.svg", "svg");
+end
+
+% Comparison of the groups
+f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
+fill([t,flip(t)],[mean_27-std_27,flip(mean_27 + std_27)],color_27,'EdgeColor','none','FaceAlpha',0.5);
+plot(t,mean_27,'-','color',0.6*color_27,'LineWidth',3)
+fill([t,flip(t)],[mean_37-std_37,flip(mean_37 + std_37)],color_37,'EdgeColor','none','FaceAlpha',0.5);
+plot(t,mean_37,'-','color',0.6*color_37,'LineWidth',3)
+xlabel("Time [min]")
+ylabel("Effective Elastic Modulus [kPa]")
+ylim([30,400])
+set(gca,'FontName','Calibri','FontSize',14)
+if to_save
+    saveas(gcf, output_fig_folder + "GroupComparison.svg", "svg");
+end
+
+%% Plotting the Joint Posteriors
+
+% E, dE:
+fig1 = figure("Position",[100,100,750,600],'Color','w');
+sampler.PlotJointPosterior(fig1,[1,2,3,4,5])
+if to_save
+    saveas(fig1, output_fig_folder + "E_dE_JointPrior.svg", "svg");
+end
+
+% dE, effects:
+fig2 = figure("Position",[100,100,750,600]*0.8,'Color','w');
+sampler.PlotJointPosterior(fig2,[2,4,8,9])
+if to_save
+    saveas(fig2, output_fig_folder + "dE_Effects_JointPrior.svg", "svg");
+end
+
+% tau, effects:
+fig3 = figure("Position",[100,100,750,600]*0.8,'Color','w');
+sampler.PlotJointPosterior(fig3,[6,7,10,11])
+if to_save
+    saveas(fig3, output_fig_folder + "tau_Effects_JointPrior.svg", "svg");
+end
