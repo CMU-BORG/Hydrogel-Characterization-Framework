@@ -24,7 +24,6 @@ For reproducibility, download and extract the repository locally before running 
 │   ├── StiffnessTesting.m
 │   ├── MonomerRatios.m
 │   ├── Plotting.m
-│   ├── ExponentialRegression.m
 │   ├── ErrEllipse.m
 │   ├── swft.m
 │
