@@ -7,7 +7,7 @@
 AreaDynamicsPopulationModel_SMC
 
 %% Mass Data
-MassDynamicsPopulationModel_ABC_SMC
+MassDynamicsPopulationModel_SL_SMC
 
 %% Stiffness Data
-StiffnessDynamicsPopulationModel_ABC_SMC
+StiffnessDynamicsPopulationModel_SL_SMC

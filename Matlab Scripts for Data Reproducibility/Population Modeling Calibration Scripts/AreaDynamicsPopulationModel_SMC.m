@@ -1,16 +1,18 @@
-%% SMC Sampler for Stiffness Dynamics Population
+%% SMC Sampler for Cross-Sectional Area Dynamics Population
 %{
-    Last Updated: MJB 11/7/2026
+    Last Updated: MJB 11/24/2026
 
     Calculates the posterior distribution of population model parameters
-    for the stiffness dynamics model using Approximate Bayesian Computation 
-    (synthetic likelihoods) Sequential Monte Carlo methods.
+    for the area dynamics model using Sequential Monte Carlo methods.
 %}
 
 clear all; close all; clc
 
-addpath(cd+"\Sequential Monte Carlo Library")
-addpath(cd+"\Population Models")
+cur_dir = split(cd,"\");
+root_dir = join(cur_dir(1:end-2),"\");
+
+addpath(root_dir+"\Sequential Monte Carlo Library")
+addpath(root_dir+"\Population Models")
 
 % Start parallel pool if not already running
 if isempty(gcp('nocreate'))
@@ -22,7 +24,7 @@ timestamp = datestr(now, 'yyyymmdd_HH00');
 % Parameters related to saving the figures and data
 to_save = 1;
 if to_save
-    output_fig_folder = "Stiffness Results" +string(timestamp)+ "\";
+    output_fig_folder = "Area Results" +string(timestamp)+ "\";
     if isfolder(output_fig_folder)
         % Remove the folder and all of its contents status safely
         rmdir(output_fig_folder, 's'); 
@@ -33,49 +35,28 @@ end
 % setting for reproducibility
 rng(1000000); 
 
-%% Loading the Experimental data
+%% Loading the fitted parameter data
 
-% data location
-% currentFolder = pwd;
-root = "../Experimental Data/";
+% data from the fitting of the exponential curves to the dynamical data.
+% Used to estimate the population model parameters
+data = load("AreaModelParameters.mat","params").params;
 
-% loading the inventory table with all of the summary data
-inventory_file = "Inventory Final.xlsx";
-inventory = readtable(root + inventory_file,"ReadVariableNames",true);
+%% Setting up the sampler and the parameters for the calibration
 
-% pulling out relevant columns of the inventory table (CrosslinkTime,
-% CrosslinkTemp, EffectiveElasticModulus)
-data = inventory(:, [4, 3, 16]);
+% Mean Starting Cross-sectional Area [mm^2] 
+% centered on CAD value and standard deviation not too large because of know printer calibration
+mu_A0_prior = makedist("Normal","mu",200, "sigma",50); 
 
-rows27 = find(inventory.CrosslinkTemp == 27)';
-rows37 = find(inventory.CrosslinkTemp == 37)';
-rows0 = find(inventory.CrosslinkTemp == 0)'; % for samples that were tested immediately with no additional cross-linking
+% Change in Mean of Cross-sectional Area [mm^2]
+% centered on 0, assuming no change with time
+mu_dA_prior = makedist("Normal","mu",0, "sigma",50);
 
-rows = [rows0, rows27, rows37];
-data = data{rows,:}; % 27C and 37C Initial and Final mass data
-data(:,2) = data(:,2)*60;   % converting to minutes for agreement with the area data units
-data(:,3) = data(:,3)*1000; % converting to kPa
-
-data(data(:,1)==0,1) = -1; 
-data(data(:,1)>0,1) = data(data(:,1)>0,1)==37;
-data_27 = data((data(:,1)==0)|(data(:,1)==-1),:);
-data_37 = data((data(:,1)==1)|(data(:,1)==-1),:);
-
-%% Setting up the priors
-
-% Mean starting stiffnes [kPa]
-% centered around typical (order of magnitude) stiffness of hydrogel with
-% broad spread
-mu_E0_prior = makedist("Normal","mu",100, "sigma",50);
-
-% Mean Change in Stiffness [kPa] (assuming no average change)
-mu_dE_prior = makedist("Normal","mu",0, "sigma",50);
-
-% Standard Deviation of the Stiffness Variables
-sig_E_prior = makedist("HalfNormal",'sigma',50);
+% Standard Devitaiton of CSA distribution [mm^2]
+% Half normal to enforce a strictly positive standard deviation. 50 so broad
+sig_A_prior = makedist("HalfNormal",'sigma',50);
 
 % Correlation coefficient: fully uninformative
-rho_E_prior = makedist("Uniform", "lower", -1, "upper", 1);
+rho_A_prior = makedist("Uniform", "lower", -1, "upper", 1);
 
 
 % Mean and Standard Deviation of Time Constant [min]
@@ -94,26 +75,26 @@ effect_prior = truncate(makedist("Normal",0,1),effect_min,effect_max);
 gammas_ = linspace(0.0,1,10)'; 
 
 % names of the parameters being estimated
-parameter_labels = {"\mu_{E_0}","\mu_{\Delta E}",...
-                    "\sigma_{E_0}","\sigma_{\Delta E}","\rho",...
+parameter_labels = {"\mu_{A_0}","\mu_{\Delta A}",...
+                    "\sigma_{A_0}","\sigma_{\Delta A}","\rho",...
                     "\mu_\tau","\sigma_\tau",...
                     "\alpha_\mu","\alpha_\sigma",...
                     "\beta_\mu","\beta_\sigma"};
 
 % parameter names simplified for names
-text_names = {"mu_E0","mu_de",...
-            "sigma_E0","sigma_dE","rho",...
+text_names = {"mu_A0","mu_DA",...
+            "sigma_A0","sigma_dA","rho",...
             "mu_tau","sigma_tau",...
             "alpha_mu","alpha_sigma",...
             "beta_mu","beta_sigma"};
 
-% population model class specialized for the Mass measurement experiments
-model = Stiffness_PopulationModel(1);
+% Population model class
+model = PopulationModel(1);
 
 mappings = {};  % No mappings because we have independent priors
 
-priors = {mu_E0_prior,mu_dE_prior,...
-          sig_E_prior, sig_E_prior, rho_E_prior,...
+priors = {mu_A0_prior,mu_dA_prior,...
+          sig_A_prior, sig_A_prior, rho_A_prior,...
           mean_tau_prior, sig_tau_prior,...
           effect_prior,effect_prior,effect_prior,effect_prior};
 
@@ -129,7 +110,7 @@ transforms = {{3, LogTransform()};                              % standard devia
               {11, LogitTransform(effect_min,effect_max)};};
 
 % setting up the SMC sampler
-sampler = SMC_Sampler(5000, model, priors,2.,data,gammas_,parameter_labels, mappings, transforms,0);
+sampler = SMC_Sampler(5000,model,priors,2.38,data,gammas_,parameter_labels,mappings,transforms,0);
 
 % generating the posterior
 sampler.GeneratePosterior();
@@ -153,7 +134,6 @@ end
 if to_save
     writelines(lines, output_fig_folder + "PosteriorSummary.txt");
 end
-
 %% Comparison of the prior and the posterior
 
 for i=1:length(priors)
@@ -208,14 +188,15 @@ ind_27 = find((data(:,1)==0)|(data(:,1)==-1));
 f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
 fill([t,flip(t)],[upper_CI_27,flip(lower_CI_27)],color_27,'EdgeColor','none','FaceAlpha',0.2);
 fill([t,flip(t)],[mean_27-std_27,flip(mean_27 + std_27)],color_27,'EdgeColor','none','FaceAlpha',0.5);
-
-plot(data(ind_27,2),data(ind_27,3),'ok','LineWidth',1)
-
+for i=1:length(ind_27)
+    theta = data(ind_27(i),2:end);
+    y_ = (theta(1) + theta(2)) - theta(2)*exp(-t/theta(3));
+    plot(t,y_,'--k','LineWidth',0.1)
+end
 plot(t,mean_27,'-','color',0.6*color_27,'LineWidth',3)
 xlabel("Time [min]")
-ylabel("Effective Elastic Modulus [kPa]")
-ylim([30,415])
-set(gca,'FontName','Calibri','FontSize',14)
+ylabel("Cross-sectional Area [mm^2]")
+ylim([100,270])
 set(gca,'FontName','Calibri','FontSize',14)
 if to_save
     saveas(gcf, output_fig_folder + "GroupPPC_27C.svg", "svg");
@@ -227,14 +208,15 @@ ind_37 = find((data(:,1)==1)|(data(:,1)==-1));
 f1 = figure("Position",[100,100,500,300],'Color','w'); hold all
 fill([t,flip(t)],[upper_CI_37,flip(lower_CI_37)],color_37,'EdgeColor','none','FaceAlpha',0.2);
 fill([t,flip(t)],[mean_37-std_37,flip(mean_37 + std_37)],color_37,'EdgeColor','none','FaceAlpha',0.5);
-
-plot(data(ind_37,2),data(ind_37,3),'ok','LineWidth',1)
-
+for i=1:length(ind_37)
+    theta = data(ind_37(i),2:end);
+    y_ = (theta(1) + theta(2)) - theta(2)*exp(-t/theta(3));
+    plot(t,y_,'--k','LineWidth',0.1)
+end
 plot(t,mean_37,'-','color',0.6*color_37,'LineWidth',3)
 xlabel("Time [min]")
-ylabel("Effective Elastic Modulus [kPa]")
-ylim([30,415])
-set(gca,'FontName','Calibri','FontSize',14)
+ylabel("Cross-sectional Area [mm^2]")
+ylim([100,270])
 set(gca,'FontName','Calibri','FontSize',14)
 if to_save
     saveas(gcf, output_fig_folder + "GroupPPC_37C.svg", "svg");
@@ -247,8 +229,8 @@ plot(t,mean_27,'-','color',0.6*color_27,'LineWidth',3)
 fill([t,flip(t)],[mean_37-std_37,flip(mean_37 + std_37)],color_37,'EdgeColor','none','FaceAlpha',0.5);
 plot(t,mean_37,'-','color',0.6*color_37,'LineWidth',3)
 xlabel("Time [min]")
-ylabel("Effective Elastic Modulus [kPa]")
-ylim([30,400])
+ylabel("Cross-sectional Area [mm^2]")
+ylim([125,250])
 set(gca,'FontName','Calibri','FontSize',14)
 if to_save
     saveas(gcf, output_fig_folder + "GroupComparison.svg", "svg");
@@ -256,18 +238,18 @@ end
 
 %% Plotting the Joint Posteriors
 
-% E, dE:
+% A, dA:
 fig1 = figure("Position",[100,100,750,600],'Color','w');
 sampler.PlotJointPosterior(fig1,[1,2,3,4,5])
 if to_save
-    saveas(fig1, output_fig_folder + "E_dE_JointPrior.svg", "svg");
+    saveas(fig1, output_fig_folder + "A_dA_JointPrior.svg", "svg");
 end
 
-% dE, effects:
+% dA, effects:
 fig2 = figure("Position",[100,100,750,600]*0.8,'Color','w');
 sampler.PlotJointPosterior(fig2,[2,4,8,9])
 if to_save
-    saveas(fig2, output_fig_folder + "dE_Effects_JointPrior.svg", "svg");
+    saveas(fig2, output_fig_folder + "dA_Effects_JointPrior.svg", "svg");
 end
 
 % tau, effects:

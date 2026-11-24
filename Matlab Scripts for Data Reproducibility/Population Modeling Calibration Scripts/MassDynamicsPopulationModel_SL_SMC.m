@@ -1,16 +1,19 @@
 %% SMC Sampler for Mass Dynamics Population
 %{
-    Last Updated: MJB 11/7/2026
+    Last Updated: MJB 11/24/2026
 
     Calculates the posterior distribution of population model parameters
-    for the mass dynamics model using Approximate Bayesian Computation 
-    (synthetic likelihoods) Sequential Monte Carlo methods.
+    for the mass dynamics model using Synthetic Likelihood Sequential Monte 
+    Carlo methods.
 %}
 
 clear all; close all; clc
 
-addpath(cd+"\Sequential Monte Carlo Library")
-addpath(cd+"\Population Models")
+cur_dir = split(cd,"\");
+root_dir = join(cur_dir(1:end-2),"\");
+
+addpath(root_dir+"\Sequential Monte Carlo Library")
+addpath(root_dir+"\Population Models")
 
 % Start parallel pool if not already running
 if isempty(gcp('nocreate'))

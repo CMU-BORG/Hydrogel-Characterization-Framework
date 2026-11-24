@@ -1,6 +1,6 @@
 %% Script to regenerate plots for previous results
 %{
-    Last Updated: MJB 11/10/2026
+    Last Updated: MJB 11/24/2026
     
     This script allows for the results of the SMC samplers to be generated
     without having to rerun the simulations.
@@ -8,8 +8,11 @@
 
 clear all; close all; clc
 
-addpath(cd+"\Sequential Monte Carlo Library")
-addpath(cd+"\Population Models")
+cur_dir = split(cd,"\");
+root_dir = join(cur_dir(1:end-2),"\");
+
+addpath(root_dir+"\Sequential Monte Carlo Library")
+addpath(root_dir+"\Population Models")
 
 sampler_file_name = "SMC_sampler_results.mat";
 
