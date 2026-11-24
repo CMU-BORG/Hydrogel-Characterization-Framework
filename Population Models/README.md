@@ -13,10 +13,13 @@ This folder contains the class implementation of the Population Model presented 
 
 ## 📐 Model Definition
 For a measured hydrogel property (e.g., a geometric or mechanical property), we assume that this property changes over time as the material crosslinks as a first order dynamical system. For property $y_i(t)$ measured from sample $i$ at time $t$ and at temperature $T\in[0,1]$ ($0$: 27 $^o$ C, $1$: 37 $^o$ C), the property evolves as
+
 $$\begin{align}
 y_i(t|T) = y_{i,0} + \Delta y_i\biggr(1-e^{-t/\tau_i} \biggr)
 \end{align}$$
+
 where $y_{i,0}$, $\Delta y_{i}$, and $\tau_i$ are the starting property, the change in property by steady state, and the characteristic time constant of the crosslinking dynamics. To account for sample-to-sample heterogenity (caused by, e.g., variability in biologically derived stock materials), we assume the sample-level dynamical model parameters $\theta_i=\{y_{i,0},\Delta y_i,\tau_i \}$ is drawn form a generative population model. For this model, we assume that $y_{i,0}$ and $\Delta y_i$ are jointly Normally distributed as
+
 $$\begin{align}
 \begin{bmatrix} 
     y_{0,i}\\ 
@@ -32,11 +35,15 @@ $$\begin{align}
     \rho\sigma_{y_0}\sigma_{\Delta y}(T) & \sigma_{\Delta y}(T_i)^2 
 \end{bmatrix} \right)
 \end{align}$$
+
 and $\tau_i$ is Gamma distributed as
+
 $$\begin{align}
 \tau_i\Bigr|T_i\sim \Gamma\left(\mu_{\tau}(T_i),\sigma_{\tau}(T_i)\right)
 \end{align}$$
+
 **Note**: Here, the Gamma distribution is parameterized by its mean and standard deviation, rather than typical location and scale parameters. These are related to the mean and standard deviation as $\alpha_\tau = (\mu_\tau/\sigma_\tau)^2$ and $\beta_\tau=\sigma_\tau^2/\mu_\tau$. The model parameters are functions of the crosslinking temperature to account for possible temperature-induced changes in the final steady state parameter and the rate of crosslinking:
+
 $$
 \begin{align} 
     \mu_{\Delta y}(T) &= \mu_{\Delta y}\left(1+\alpha_{\mu}T\right) \\ 
@@ -45,6 +52,7 @@ $$
     \sigma_{\tau}(T) &= \sigma_{\tau}\left(1+\beta_{\sigma}T\right) 
 \end{align} 
 $$
+
 where $\alpha_J$ and $\beta_J$ are the fractional changes in the parameter $J$ between the baseline temperature group and the elevated temperature group. This same formulation could be used for continuously varying temperatures as well. For full details, see "Materials and Methods: Population Modeling of Hydrogel Material Properties" in the manuscript.
 
 
