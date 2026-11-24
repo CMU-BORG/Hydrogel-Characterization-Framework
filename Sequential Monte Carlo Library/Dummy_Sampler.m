@@ -372,7 +372,7 @@ classdef Dummy_Sampler < handle
 
         end
 
-        function fig = PlotKDEstimate_All(obj)
+        function figs = PlotKDEstimate_All(obj)
             
             if ~obj.calibrated
                 error("Posterior must be calibrated before you can plot the convergence")
