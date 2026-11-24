@@ -97,7 +97,7 @@ for j = 1:length(temperatureOffset)
 end
 
 
-%% STATISTICAL ANALYSIS - STIFFNESS 
+%% OPTIONAL FREQUENTIST STATISTICAL ANALYSIS - STIFFNESS 
 
 fprintf("\n=== STATISTICAL ANALYSIS (Stiffness) ===\n");
 
@@ -208,7 +208,7 @@ end
 KW_Pairwise_Stiffness = cell2table(results, ...
     'VariableNames', {'GroupA','GroupB','pValue'});
 
-%% STATISTICAL ANALYSIS — SWELLING (percentM)
+%% OPTIONAL FREQUENTIST STATISTICAL ANALYSIS — SWELLING (percentM)
 
 fprintf("\n=== STATISTICAL ANALYSIS (Swelling: percentM) ===\n");
 
