@@ -49,7 +49,7 @@ classdef N_IG_Model < handle
             p = p_sig.*p_mu;
         end
 
-        function X = random(obj,N)
+        function X = rnd(obj,N)
             % generates N random Bernoulli variables
             if (length(N)==1)||(N(2)==1)
                 sigma2 = 1 ./ gamrnd(obj.alpha, 1/obj.beta, [N(1), 1]); % sampling variance from an inverse gamma
