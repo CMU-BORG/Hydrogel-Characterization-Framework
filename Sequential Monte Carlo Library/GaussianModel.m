@@ -17,6 +17,9 @@ classdef GaussianModel < handle
 
     methods
         function obj = GaussianModel(input_variance)
+            arguments
+                input_variance = 0;
+            end
             obj.mu = 0; % initializing
             obj.sig = 1;
             obj.input_variance = input_variance;

@@ -17,7 +17,7 @@ classdef GammaModel < handle
     methods
         function obj = GammaModel(MS_param)
             arguments
-                MS_param 
+                MS_param = 0; 
             end
             obj.alpha = 1; % initializing
             obj.beta = 1;

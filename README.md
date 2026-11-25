@@ -14,8 +14,26 @@ For reproducibility, download and extract the repository locally before running 
 ```bash
 
 ├── README.md
-├── Hydrogel_SMC_Skeleton.m
-├── Hydrogel_SMC_Alginate_Example.m
+│
+├── Population Models
+│
+│   ├──README.md
+│   ├──PopulationModel.m
+│   ├──Mass_PopulationModel.m
+│   ├──Stiffness_PopulationModel.m
+│   └──TestingPopulationModel.m
+│
+├── Sequential Monte Carlo Library
+│   │   │
+│   │   ├──README.md
+│   │   ├──BernoulliModel.m
+│   │   ├──Dummy_Sampler.m
+│   │   ├──GammaModel.m
+│   │   ├──LogitTransform.m
+│   │   ├──LogTransform.m
+│   │   ├──N_IG_Model.m
+│   │   ├──SMC_Sampler.m
+│   │   └──TestingSMC.m
 │
 ├── Matlab Scripts for Data Reproducibility
 │
@@ -26,23 +44,23 @@ For reproducibility, download and extract the repository locally before running 
 │   ├── Plotting.m
 │   ├── ErrEllipse.m
 │   ├── swft.m
-│
-│   ├── Modeling Framework
 │   │
-│   │   ├── Population Models
-│   │   │
-│   │   ├── Sequential Monte Carlo Library
-│   │   │
+│   ├──Population Modeling Calibration Scripts
+│   │   
 │   │   ├── Area Results (timestamped)
 │   │   │
 │   │   ├── Mass Results (timestamped)
 │   │   │
 │   │   ├── Stiffness Results (timestamped)
 │   │   │
-│   │   ├──
-│   │   ├──
-│   │   └──
-│
+│   │   ├──All_Samplers.m
+│   │   ├──AreaDynamicsPopulationModel_SMC.m
+│   │   ├──AreaModelParameterFitting.m
+│   │   ├──PosteriorInference_AreaTimeConstants.m
+│   │   ├──MassDynamicsPopulationModel_SL_SMC.m
+│   │   ├──StiffnessDynamicsPopulationModel_SL_SMC.m
+│   │   ├──ReplottingResults.m
+│   │
 │   ├── ExperimentalData
 │   │
 │   │   ├── Inventory Final.xlsx
@@ -54,7 +72,6 @@ For reproducibility, download and extract the repository locally before running 
 │   │   │
 │   │   ├── FIGURES
 │   │   ├── HNMR
-│   │   ├── computation
 │   │   │
 │   │   └── Sample Folders
 │   │       └── Xtn
