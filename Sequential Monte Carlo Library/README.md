@@ -36,12 +36,12 @@ This library implements a Sequential Monte Carlo (SMC) method to estimate the po
     * Inputs: 
 
         * **N**: number of particles used in the estimation of the posterior. For simple models with low parameter dimensionality, start around 1000; more particles will be needed for larger dimensionality models or for more complicated posteriors
-        * **model**: statistical model captured as an instance of a MATLAB class. This class requires the following minimum functions (use example these syntax, as the SMC sampler calls them exactly as listed below; see the example statistical model included in the library):
+        * **model**: statistical model captured as an instance of a MATLAB class. This class requires the following minimum functions (use exactly these syntax, as the SMC sampler calls them exactly as listed below; see the example statistical model included in the library):
             
             *  ***setParams(obj,theta)***: takes in the paramter vector theta and updates the model's parameter that are stored as class properties. The exact method of storing the model parameters does not matter, as the SMC sampler only need to be able to set them using this function
             * ***log_likelihood(obj,X)***: takes in a data (the form of which will be model dependent and can contain additional information needed to implement synthetic likelihood methods) and returns the model's log likelihood of the dataset. This same function is used for both true likelihoods and synthetic likelihoods. If you are using synthetic likelihoods, implement your simulations and kernel density estimates here. See [Stiffness_PopulationModel.m](https://github.com/CMU-BORG/Hydrogel-Characterization-Framework/blob/main/Population%20Models/Stiffness_PopulationModel.m) for an example of implementing a synthetic likelihood with kernel density estimation
         
-        * **priors**: $P\times 1$ cell array of prior distributions (instances of MATLAB distributions or custom implements models, see below)
+        * **priors**: $P\times 1$ cell array of prior distributions (instances of MATLAB distributions or custom implementations models, see below)
         * **propose_mult**: scalar used to scale the emperical covariance during MCMC perturbation steps (see below). This is used to tune the acceptance rate of your perturbation steps to be around 20\% to 40\%
         * **data**: dataset that will be passed to the model's log likelihood function. The structure of this data can be set in a convenient way for your model as the SMC sampler only ever passes the entire variable to the log likelihood function.
         * **gammas**: vector of geometric bridging coefficients (ranging from 0 to 1). This vector sets the tempering schedule of the sample. Start with around 5-10 values in the vector. If the sampler collapses (very low effective sample size), try increasing the number of generations. Alternatively, you can try a nonlinear tempering schedule, where the values for 0 to 1 change according to a nonlinear function
@@ -85,7 +85,7 @@ This library implements a Sequential Monte Carlo (SMC) method to estimate the po
         * **jacobian(p)**: returns the Jacobian of the logit transform at point p
         * **inv_jacobian(exp_p)**: returns the inverse jacobian at the point exp_p 
 
-* [TestingSMC.m](https://github.com/CMU-BORG/Hydrogel-Characterization-Framework/blob/main/Sequential%20Monte%20Carlo%20Library/TestingSMC.m): validation script that confirms the functionality of the SMC sampler using single- and multi-variable statistical models. SMC posterior prediction are confirms against analytical posterior from conjugate priors (see Binomial model example and Gaussian model example) or posteriors that can be reasonably numerically integrated (see Gamma model example). This script also serves as a minimum example of how to use the SMC_Sampler to estimate a parameter posterior.
+* [TestingSMC.m](https://github.com/CMU-BORG/Hydrogel-Characterization-Framework/blob/main/Sequential%20Monte%20Carlo%20Library/TestingSMC.m): validation script that confirms the functionality of the SMC sampler using single- and multi-variable statistical models. SMC posterior predictions are confirmed against analytical posterior from conjugate priors (see Binomial model example and Gaussian model example) or posteriors that can be reasonably numerically integrated (see Gamma model example). This script also serves as a minimum example of how to use the SMC_Sampler to estimate a parameter posterior.
 
 ### Example statistical models for validation and use as priors
 
@@ -114,39 +114,53 @@ $$
 \end{align}
 $$
 
-where $\pi(\theta)$ is the prior distribution on the model parameters, and $\pi(X)$ is the total probability of the data given the model and serves as a normalizing constant. For most statistical models, sampling directly from the posterior is intractable. However, we can sample from the prior or from another distribution and then update the sample until, in agregate, our samples represent the posterior. In Sequential Monte Carlo methods, we aim to estimate the posterior distribution using a set of weighted particles ($\{w_i,\theta_i\}$). For a properly calibrated set of weights and particles, we can generate new samples from the posterior, estimate probabilities in the posterior, and calculate estimates of functions on the posterior (e.g., the mean or expectation of a function of $\theta$). 
+where $\pi(\theta)$ is the prior distribution on the model parameters, and $\pi(X)$ is the total probability of the data given the model and serves as a normalizing constant. For most statistical models, sampling directly from the posterior is intractable. However, we can sample from the prior or from another distribution and then update the sample until, in aggregate, our samples represent the posterior. In Sequential Monte Carlo methods, we aim to estimate the posterior distribution using a set of weighted particles ($\{w_i,\theta_i\}$). For a properly calibrated set of weights and particles, we can generate new samples from the posterior, estimate probabilities in the posterior, and calculate estimates of functions on the posterior (e.g., the mean or expectation of a function of $\theta$). 
 
 To achieve this, Sequential Monte Carlo breaks the problem into a series of transition steps, where the weights of particles are progressively updated to approximate intermediate distributions ($\pi_g(\theta|X) \propto f(X|\theta)^{\gamma_g}\pi(\theta)$). When the weights of many particles drop too low (causing the effective sample size to drop below a threshold), all particles are resampled according to their weights. This discards low weight particles and replaces them with higher weight ones. Then to prevent many particles from having the same value, a mutation step, consisting of a series of Markov Chain Monte Carlo (MCMC) steps, occurs to remix the particles. 
 
-$$
-\begin{array}{l}
-\hline
-\textbf{Algorithm 1: } \text{Sequential Monte Carlo Sampling} \\
-\hline
-\textbf{Input: } \text{ Observed data $\mathcal{D}$, population model $M$, prior distributions $\pi(\boldsymbol{\theta})$, proposal widths}\\ \text{\ \ \ \ number of particles $N$, number of generations $G$, and a tempering schedule $\{\gamma_g\}\in[0,1]$} \\
-\textbf{Output: } \text{Set of equal weight samples from the posterior $\pi(\theta|X)$} \\
-1:\ \ \text{Initialize the particle population ($\{\theta^*_i\}_1$) by sampling the prior and setting the} \\ \text{\ \ \ \ \ \ \ weights to be even ($w_i=1/N \ \forall \ i$)} \\
-
-2:\ \ \textbf{for } i = 2 \textbf{ to } G \textbf{ do} \\
-
-3:\ \ \quad \text{Calculate updated weights ($w_{i,g} = w_{i,g-1}\pi_g(\theta_i^*|Y)/\pi_{g-1}(\theta_i^*|Y) = w_{g,i-1}f(Y|\theta_i^*)^{\gamma_g - \gamma_{g-1}} \ \ \forall \ i$)} \\
-
-4:\ \ \quad \text{Calculate effective sample size ($ESS = 1/\sum_i^N w_i^2$)}\\
-
-5:\ \ \quad \textbf{if $ESS<0.75N$} \\
-6:\ \ \quad \quad \text{Systematically resample particles according to $w_{i,g}$} \\
-7:\ \ \quad \quad \text{Reset weights to $w_{i,g}=1/N$} \\
-8:\ \ \quad \textbf{end if} \\
-9:\ \ \quad \textbf{for } j=1 \textbf{ to } 10 \textbf{ do}\\
-10:\ \ \quad \quad \text{Perturb particles with mean-zero Gaussian proposals (proposal }\\ \text{\quad \quad \quad \quad \quad covariance $\propto$ weighted covariance of the particles)}\\
-11:\ \ \quad \quad \text{Accept particle according to Metropolis-Hastings ratio (see paper)}\\
-12:\ \ \quad \textbf{end for} \\
-
-13:\ \ \quad \text{Save intermediate population and weights}\\
-
-14:\ \ \textbf{end for } \\
-15:\ \ \textbf{Final systematic resampling to obtain unweighted posterior sample}\\
-16:\ \ \textbf{return } \{\theta_{i,g}\}\\
-\hline
-\end{array}
-$$
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Algorithm 1: Sequential Monte Carlo Sampling                                                 │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Input: Observed data D, population model M, prior distributions π(θ), proposal widths,       │
+│        number of particles N, number of generations G, and a tempering schedule              │
+│        {γ_g} ∈ [0,1]                                                                         │
+│                                                                                              │
+│ Output: Set of equal-weight samples from the posterior π(θ|X)                                │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1:  Initialize the particle population ({θ_i}_1) by sampling the prior and setting the       │
+│     weights to be even (wi = 1/N ∀ i)                                                        │
+│                                                                                              │
+│ 2:  for i = 2 to G do                                                                        │
+│                                                                                              │
+│ 3:      Calculate updated weights (w_(i,g) = w_(i,g−1)π_g(θ_i|Y)/π_(g−1)(θ_i|Y)              │
+│                                           = w_(g,i−1)f(Y|θ_i)^(γ_g − γ_(g−1)) ∀ i)           │
+│                                                                                              │
+│ 4:      Calculate effective sample size (ESS = 1/Σ_i w_i²)                                   │
+│                                                                                              │ 
+│ 5:      if ESS < 0.75N                                                                       │
+│                                                                                              │
+│ 6:          Systematically resample particles according to w_(i,g)                           │
+│                                                                                              │
+│ 7:          Reset weights to w_(i,g) = 1/N                                                   │
+│                                                                                              │
+│ 8:      end if                                                                               │
+│                                                                                              │
+│ 9:      for j = 1 to 10 do                                                                   │
+│                                                                                              │
+│ 10:         Perturb particles with mean-zero Gaussian proposals (proposal                    │
+│             covariance ∝ weighted covariance of the particles)                               │
+│                                                                                              │
+│ 11:         Accept particle according to Metropolis-Hastings ratio (see paper)               │
+│                                                                                              │
+│ 12:     end for                                                                              │
+│                                                                                              │
+│ 13:     Save intermediate population and weights                                             │
+│                                                                                              │
+│ 14: end for                                                                                  │ 
+│                                                                                              │ 
+│ 15: Final systematic resampling to obtain unweighted posterior sample                        │
+│                                                                                              │ 
+│ 16: return {θ_(i,g)}                                                                         │
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
+```
