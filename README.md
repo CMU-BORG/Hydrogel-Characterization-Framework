@@ -91,7 +91,7 @@ For reproducibility, download and extract the repository locally before running 
 
 1. **Fabrication of Hydrogel Samples**
    - Slice target part geometry using Slic3r configuration profile for desired printer.
-   - FRESH-print part out of desired hydrogel material, and perform any post-processing steps to bring it to the "uncrosslinkied/baseline crosslinked" reference state. 
+   - FRESH-print part out of desired hydrogel material, and perform any post-processing steps to bring it to the "uncrosslinked/baseline crosslinked" reference state. 
 
 2. **Sample Metadata**
    - Measure and record initial sample diameter, mass, height in `Inventory_Final.xlsx`.
@@ -167,17 +167,17 @@ Examples:
 
 For these datasets, the framework combines SMC with likelihood-free inference techniques to estimate population-level dynamics from discrete observations.
 
-## Curent Example Applications
+## Current Example Applications
 The alginate case study included in this repository demonstrates application of the framework to three distinct material metrics:
 
-###Cross-Sectional Area
+### Cross-Sectional Area
 Used to quantify:
 
   - Geometric fidelity
   - Contraction dynamics
   - Temperature-dependent dimensional changes
 
-###Effective Elastic Modulus
+### Effective Elastic Modulus
 Used to quantify:
 
   - Mechanical performance
@@ -218,4 +218,5 @@ Modeling Framework/
 - Required MATLAB toolboxes:
   - Statistics and Machine Learning Toolbox
   - Image Processing Toolbox (recommended for geometric analysis workflows)
+  - Parallel computing toolbox
 
